@@ -10,6 +10,7 @@ struct OpenDrtUniforms {
   uint inGamut;
   uint inOetf;
   uint displayEncodingPreset;
+  uint lookPreset;
   float displayPeakLuminance;
 };
 
@@ -190,7 +191,7 @@ the preset parameters below.
 // Limited), Rec.2100 - HLG / Rec.2020 (P3 Limited), Dolby - PQ / P3-D65})
 
 // 0-Standard, 1-Arriba, 2-Sylvan, 3-Colorful, 4-Aery, 5-Dystopic, 6-Umbra
-const static uint look_preset = 0;      // Look Preset
+// const static uint look_preset = 0;      // Look Preset
 const static uint tonescale_preset = 0; // Tonescale Preset
 const static uint _cwp = 0;             // Creative White
 const static float _cwp_lm = 0.25;      // Creative White Limit
@@ -1304,6 +1305,7 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
   uint in_oetf = uniforms.inOetf;   // Input OETF
   uint display_encoding_preset =
       uniforms.displayEncodingPreset;          // Display Encoding Preset
+  uint look_preset = uniforms.lookPreset; // Look Preset
   float tn_Lp = uniforms.displayPeakLuminance; // Display Peak Luminance
 
   // Init look preset variables

@@ -6,12 +6,41 @@ use wgpu::util::DeviceExt;
 
 mod slang_macros;
 
+#[derive(Clone, Debug, clap::ValueEnum, Default)]
+pub enum OpenDrtLook {
+    #[default]
+    Standard,
+    Arriba,
+    Sylvan,
+    Colorful,
+    Aery,
+    Dystopic,
+    Umbra,
+    All,
+}
+
+impl OpenDrtLook {
+    fn to_u32(&self) -> u32 {
+        match self {
+            OpenDrtLook::Standard => 0,
+            OpenDrtLook::Arriba => 1,
+            OpenDrtLook::Sylvan => 2,
+            OpenDrtLook::Colorful => 3,
+            OpenDrtLook::Aery => 4,
+            OpenDrtLook::Dystopic => 5,
+            OpenDrtLook::Umbra => 6,
+            OpenDrtLook::All => 999,
+        }
+    }
+}
+
 #[derive(Parser, Debug)]
 #[command(name = "wgpu-slang-tonemappers")]
-#[command(about = "Process EXR images with ACES 2.0 compute shader", long_about = None)]
+#[command(about = "Process EXR images with OpenDRT compute shader", long_about = None)]
 pub struct Args {
     pub input: PathBuf,
     pub output: PathBuf,
+    pub look: Option<OpenDrtLook>,
 }
 
 // Define the uniform buffer struct that matches your shader
@@ -21,7 +50,9 @@ struct ShaderUniforms {
     in_gamut: u32,
     in_oetf: u32,
     display_encoding_preset: u32,
+    look_preset: u32,
     display_peak_luminance: f32,
+    _padding: [u32; 3],
 }
 
 pub async fn run(args: Args) -> anyhow::Result<()> {
@@ -32,7 +63,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     let shader = device.create_shader_module(wgpu_include_slang_shader!("entry"));
 
     let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-        label: Some("ACES 2.0 Compute Pipeline"),
+        label: Some("OpenDRT Compute Pipeline"),
         layout: None,
         module: &shader,
         entry_point: None,
@@ -116,7 +147,9 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
         in_gamut: 1,
         in_oetf: 3,
         display_encoding_preset: 1,
+        look_preset: args.look.unwrap_or_default().to_u32(),
         display_peak_luminance: 100.0,
+        _padding: [0; 3],
     };
 
     let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
