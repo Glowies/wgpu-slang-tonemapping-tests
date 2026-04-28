@@ -2,6 +2,7 @@ use clap::Parser;
 use flume::bounded;
 use image::{ImageBuffer, Rgba};
 use std::path::PathBuf;
+use wgpu::util::DeviceExt;
 
 mod aces;
 mod slang_macros;
@@ -12,6 +13,16 @@ mod slang_macros;
 pub struct Args {
     pub input: PathBuf,
     pub output: PathBuf,
+}
+
+// Define the uniform buffer struct that matches your shader
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct ShaderUniforms {
+    in_gamut: u32,
+    in_oetf: u32,
+    display_encoding_preset: u32,
+    display_peak_luminance: f32,
 }
 
 pub async fn run(args: Args) -> anyhow::Result<()> {
@@ -100,7 +111,22 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     let output_texture_view = output_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
     // CREATE BIND GROUP FOR THE COMPUTE SHADER
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+
+    // Create uniform buffer
+    let uniforms = ShaderUniforms {
+        in_gamut: 1,
+        in_oetf: 3,
+        display_encoding_preset: 1,
+        display_peak_luminance: 100.0,
+    };
+
+    let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Shader Uniforms"),
+        contents: bytemuck::cast_slice(&[uniforms]),
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+    });
+
+    let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: None,
         layout: &pipeline.get_bind_group_layout(0),
         entries: &[
@@ -115,6 +141,15 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
         ],
     });
 
+    let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: None,
+        layout: &pipeline.get_bind_group_layout(1),
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: uniform_buffer.as_entire_binding(),
+        }],
+    });
+
     // ENQUEUE THE COMPUTE SHADER AND TEXTURE COPY
     let mut encoder = device.create_command_encoder(&Default::default());
 
@@ -126,7 +161,8 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
 
         let mut pass = encoder.begin_compute_pass(&Default::default());
         pass.set_pipeline(&pipeline);
-        pass.set_bind_group(0, &bind_group, &[]);
+        pass.set_bind_group(0, &texture_bind_group, &[]);
+        pass.set_bind_group(1, &uniform_bind_group, &[]);
         pass.dispatch_workgroups(num_workgroups_x, num_workgroups_y, 1);
     }
 
