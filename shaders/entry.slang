@@ -1,5 +1,3 @@
-import "modules/aces2_output_transform.slang";
-import "modules/aces_transform_common.slang";
 import "modules/opendrt.slang";
 
 struct Textures {

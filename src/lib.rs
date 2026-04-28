@@ -4,11 +4,10 @@ use image::{ImageBuffer, Rgba};
 use std::path::PathBuf;
 use wgpu::util::DeviceExt;
 
-mod aces;
 mod slang_macros;
 
 #[derive(Parser, Debug)]
-#[command(name = "wgpu-slang-aces2")]
+#[command(name = "wgpu-slang-tonemappers")]
 #[command(about = "Process EXR images with ACES 2.0 compute shader", long_about = None)]
 pub struct Args {
     pub input: PathBuf,
