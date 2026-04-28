@@ -32,6 +32,31 @@ impl OpenDrtLook {
             OpenDrtLook::All => 999,
         }
     }
+
+    fn all_presets() -> Vec<OpenDrtLook> {
+        vec![
+            OpenDrtLook::Standard,
+            OpenDrtLook::Arriba,
+            OpenDrtLook::Sylvan,
+            OpenDrtLook::Colorful,
+            OpenDrtLook::Aery,
+            OpenDrtLook::Dystopic,
+            OpenDrtLook::Umbra,
+        ]
+    }
+
+    fn preset_name(&self) -> &'static str {
+        match self {
+            OpenDrtLook::Standard => "standard",
+            OpenDrtLook::Arriba => "arriba",
+            OpenDrtLook::Sylvan => "sylvan",
+            OpenDrtLook::Colorful => "colorful",
+            OpenDrtLook::Aery => "aery",
+            OpenDrtLook::Dystopic => "dystopic",
+            OpenDrtLook::Umbra => "umbra",
+            OpenDrtLook::All => "all",
+        }
+    }
 }
 
 #[derive(Parser, Debug)]
@@ -56,6 +81,14 @@ struct ShaderUniforms {
 }
 
 pub async fn run(args: Args) -> anyhow::Result<()> {
+    // Determine which looks to process
+    let looks_to_process = if matches!(args.look, Some(OpenDrtLook::All)) {
+        OpenDrtLook::all_presets()
+    } else {
+        vec![args.look.unwrap_or_default()]
+    };
+    let is_processing_multiple = looks_to_process.len() > 1;
+
     let instance = wgpu::Instance::new(&Default::default());
     let adapter = instance.request_adapter(&Default::default()).await.unwrap();
     let (device, queue) = adapter.request_device(&Default::default()).await.unwrap();
@@ -141,20 +174,16 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     let output_texture_view = output_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
     // CREATE BIND GROUP FOR THE COMPUTE SHADER
-
-    // Create uniform buffer
-    let uniforms = ShaderUniforms {
-        in_gamut: 1,
-        in_oetf: 3,
-        display_encoding_preset: 1,
-        look_preset: args.look.unwrap_or_default().to_u32(),
-        display_peak_luminance: 100.0,
-        _padding: [0; 3],
-    };
-
     let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Shader Uniforms"),
-        contents: bytemuck::cast_slice(&[uniforms]),
+        contents: bytemuck::cast_slice(&[ShaderUniforms {
+            in_gamut: 1,
+            in_oetf: 3,
+            display_encoding_preset: 1,
+            look_preset: 0,
+            display_peak_luminance: 100.0,
+            _padding: [0; 3],
+        }]),
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
 
@@ -182,6 +211,57 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
         }],
     });
 
+    // Process each look preset
+    for look in looks_to_process {
+        process_look(
+            look,
+            &device,
+            &queue,
+            &pipeline,
+            &uniform_buffer,
+            &texture_bind_group,
+            &uniform_bind_group,
+            texture_size,
+            texel_copy_buffer_layout,
+            &output_texture,
+            &temp_buffer,
+            &args.output,
+            is_processing_multiple,
+        )
+        .await?;
+    }
+
+    println!("Successfully processed image!");
+
+    Ok(())
+}
+
+async fn process_look(
+    look: OpenDrtLook,
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    pipeline: &wgpu::ComputePipeline,
+    uniform_buffer: &wgpu::Buffer,
+    texture_bind_group: &wgpu::BindGroup,
+    uniform_bind_group: &wgpu::BindGroup,
+    texture_size: wgpu::Extent3d,
+    texel_copy_buffer_layout: wgpu::TexelCopyBufferLayout,
+    output_texture: &wgpu::Texture,
+    temp_buffer: &wgpu::Buffer,
+    output_path_base: &PathBuf,
+    is_with_look_in_name: bool,
+) -> anyhow::Result<()> {
+    // Update uniform buffer with the current look preset
+    let uniforms = ShaderUniforms {
+        in_gamut: 1,
+        in_oetf: 3,
+        display_encoding_preset: 1,
+        look_preset: look.to_u32(),
+        display_peak_luminance: 100.0,
+        _padding: [0; 3],
+    };
+    queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));
+
     // ENQUEUE THE COMPUTE SHADER AND TEXTURE COPY
     let mut encoder = device.create_command_encoder(&Default::default());
 
@@ -193,8 +273,8 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
 
         let mut pass = encoder.begin_compute_pass(&Default::default());
         pass.set_pipeline(&pipeline);
-        pass.set_bind_group(0, &texture_bind_group, &[]);
-        pass.set_bind_group(1, &uniform_bind_group, &[]);
+        pass.set_bind_group(0, texture_bind_group, &[]);
+        pass.set_bind_group(1, uniform_bind_group, &[]);
         pass.dispatch_workgroups(num_workgroups_x, num_workgroups_y, 1);
     }
 
@@ -241,15 +321,24 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     // We need to unmap the buffer to be able to use it again
     temp_buffer.unmap();
 
+    // Generate output path with look preset name if processing multiple looks
+    let output_path = if is_with_look_in_name {
+        let mut path = output_path_base.clone();
+        let stem = path.file_stem().unwrap().to_string_lossy().to_string();
+        let extension = path.extension().unwrap().to_string_lossy().to_string();
+        path.set_file_name(format!("{}_{}.{}", stem, look.preset_name(), extension));
+        path
+    } else {
+        output_path_base.clone()
+    };
+
     // Write output EXR file
-    println!("Writing output to: {:?}", args.output);
+    println!("Writing output to: {:?}", output_path);
     let output_image: ImageBuffer<Rgba<f32>, Vec<f32>> =
         ImageBuffer::from_raw(texture_size.width, texture_size.height, output_data)
             .expect("Failed to create output image buffer");
 
-    output_image.save(&args.output)?;
-
-    println!("Successfully processed image!");
+    output_image.save(&output_path)?;
 
     Ok(())
 }
