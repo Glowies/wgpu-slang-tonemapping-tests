@@ -7,6 +7,36 @@ use wgpu::util::DeviceExt;
 mod slang_macros;
 
 #[derive(Clone, Debug, clap::ValueEnum, Default)]
+pub enum OpenDrtDisplayPreset {
+    Rec1886,
+    #[default]
+    Srgb,
+    Displayp3,
+    P3d60,
+    P3dci,
+    Xyz,
+    Rec2100pq,
+    Rec2100hlg,
+    Dolbypq,
+}
+
+impl OpenDrtDisplayPreset {
+    fn to_u32(&self) -> u32 {
+        match self {
+            OpenDrtDisplayPreset::Rec1886 => 0,
+            OpenDrtDisplayPreset::Srgb => 1,
+            OpenDrtDisplayPreset::Displayp3 => 2,
+            OpenDrtDisplayPreset::P3d60 => 3,
+            OpenDrtDisplayPreset::P3dci => 4,
+            OpenDrtDisplayPreset::Xyz => 5,
+            OpenDrtDisplayPreset::Rec2100pq => 6,
+            OpenDrtDisplayPreset::Rec2100hlg => 7,
+            OpenDrtDisplayPreset::Dolbypq => 8,
+        }
+    }
+}
+
+#[derive(Clone, Debug, clap::ValueEnum, Default)]
 pub enum OpenDrtLook {
     #[default]
     Standard,
@@ -65,7 +95,10 @@ impl OpenDrtLook {
 pub struct Args {
     pub input: PathBuf,
     pub output: PathBuf,
+    #[arg(short, long)]
     pub look: Option<OpenDrtLook>,
+    #[arg(short, long)]
+    pub display_preset: Option<OpenDrtDisplayPreset>,
 }
 
 // Define the uniform buffer struct that matches your shader
@@ -215,6 +248,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     for look in looks_to_process {
         process_look(
             look,
+            args.display_preset.clone().unwrap_or_default(),
             &device,
             &queue,
             &pipeline,
@@ -238,6 +272,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
 
 async fn process_look(
     look: OpenDrtLook,
+    display_preset: OpenDrtDisplayPreset,
     device: &wgpu::Device,
     queue: &wgpu::Queue,
     pipeline: &wgpu::ComputePipeline,
@@ -255,7 +290,7 @@ async fn process_look(
     let uniforms = ShaderUniforms {
         in_gamut: 1,
         in_oetf: 3,
-        display_encoding_preset: 1,
+        display_encoding_preset: display_preset.to_u32(),
         look_preset: look.to_u32(),
         display_peak_luminance: 100.0,
         _padding: [0; 3],
