@@ -1,12 +1,12 @@
 use clap::Parser;
 use flume::bounded;
-use image::{ImageBuffer, Rgba};
+use image::ImageBuffer;
 use std::path::PathBuf;
 use wgpu::util::DeviceExt;
 
 mod slang_macros;
 
-#[derive(Clone, Debug, clap::ValueEnum, Default)]
+#[derive(Clone, Copy, Debug, clap::ValueEnum, Default)]
 pub enum OpenDrtDisplayPreset {
     Rec1886,
     #[default]
@@ -36,7 +36,7 @@ impl OpenDrtDisplayPreset {
     }
 }
 
-#[derive(Clone, Debug, clap::ValueEnum, Default)]
+#[derive(Clone, Copy, Debug, clap::ValueEnum, Default)]
 pub enum OpenDrtLook {
     #[default]
     Standard,
@@ -139,7 +139,14 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
 
     // READ EXR FILE
     println!("Reading EXR file: {:?}", args.input);
-    let img = image::open(&args.input)?.into_rgba32f();
+    let img_dynamic = image::open(&args.input)?;
+    let input_channels = match img_dynamic.color() {
+        image::ColorType::L8 | image::ColorType::L16 => 1,
+        image::ColorType::La8 | image::ColorType::La16 => 2,
+        image::ColorType::Rgb8 | image::ColorType::Rgb16 | image::ColorType::Rgb32F => 3,
+        _ => 4, // default to RGBA for any alpha channel formats
+    };
+    let img = img_dynamic.into_rgba32f();
 
     let texture_size = wgpu::Extent3d {
         width: img.width(),
@@ -210,8 +217,8 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Shader Uniforms"),
         contents: bytemuck::cast_slice(&[ShaderUniforms {
-            in_gamut: 1,
-            in_oetf: 3,
+            in_gamut: 2, // AP1 primaries
+            in_oetf: 3,  // ACEScct oetf
             display_encoding_preset: 1,
             look_preset: 0,
             display_peak_luminance: 100.0,
@@ -245,10 +252,12 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     });
 
     // Process each look preset
+    let display_preset = args.display_preset.unwrap_or_default();
+
     for look in looks_to_process {
         process_look(
             look,
-            args.display_preset.clone().unwrap_or_default(),
+            display_preset,
             &device,
             &queue,
             &pipeline,
@@ -261,6 +270,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
             &temp_buffer,
             &args.output,
             is_processing_multiple,
+            input_channels,
         )
         .await?;
     }
@@ -284,7 +294,8 @@ async fn process_look(
     output_texture: &wgpu::Texture,
     temp_buffer: &wgpu::Buffer,
     output_path_base: &PathBuf,
-    is_with_look_in_name: bool,
+    is_processing_multiple: bool,
+    input_channels: u8,
 ) -> anyhow::Result<()> {
     // Update uniform buffer with the current look preset
     let uniforms = ShaderUniforms {
@@ -357,11 +368,11 @@ async fn process_look(
     temp_buffer.unmap();
 
     // Generate output path with look preset name if processing multiple looks
-    let output_path = if is_with_look_in_name {
+    let output_path = if is_processing_multiple {
         let mut path = output_path_base.clone();
         let stem = path.file_stem().unwrap().to_string_lossy().to_string();
         let extension = path.extension().unwrap().to_string_lossy().to_string();
-        path.set_file_name(format!("{}_{}.{}", stem, look.preset_name(), extension));
+        path.set_file_name(format!("{}-{}.{}", stem, look.preset_name(), extension));
         path
     } else {
         output_path_base.clone()
@@ -369,9 +380,24 @@ async fn process_look(
 
     // Write output EXR file
     println!("Writing output to: {:?}", output_path);
-    let output_image: ImageBuffer<Rgba<f32>, Vec<f32>> =
-        ImageBuffer::from_raw(texture_size.width, texture_size.height, output_data)
-            .expect("Failed to create output image buffer");
+
+    let output_image = if input_channels == 3 {
+        // Strip alpha channel and save as RGB
+        let rgb_data: Vec<f32> = output_data
+            .chunks(4)
+            .flat_map(|chunk| vec![chunk[0], chunk[1], chunk[2]])
+            .collect();
+        image::DynamicImage::ImageRgb32F(
+            ImageBuffer::from_raw(texture_size.width, texture_size.height, rgb_data)
+                .expect("Failed to create output image buffer"),
+        )
+    } else {
+        // Save with alpha channel
+        image::DynamicImage::ImageRgba32F(
+            ImageBuffer::from_raw(texture_size.width, texture_size.height, output_data)
+                .expect("Failed to create output image buffer"),
+        )
+    };
 
     output_image.save(&output_path)?;
 
