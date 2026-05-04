@@ -1,11 +1,3 @@
-
-/* OpenDRT v1.1.0b50 -------------------------------------------------
-
-  Written by Jed Smith
-  https://github.com/jedypod/open-display-transform
-  License: GPLv3
--------------------------------------------------*/
-
 struct OpenDrtUniforms {
   uint inGamut;
   uint inOetf;
@@ -14,442 +6,22 @@ struct OpenDrtUniforms {
   float displayPeakLuminance;
 };
 
-// Input settings
-// DEFINE_UI_PARAMS(in_gamut, Input Gamut, DCTLUI_COMBO_BOX, 15, {i_xyz, i_ap0,
-// i_ap1, i_p3d65, i_rec2020, i_rec709, i_awg3, i_awg4, i_rwg, i_sgamut3,
-// i_sgamut3cine, i_vgamut, i_bmdwg, i_egamut, i_egamut2, i_davinciwg}, {XYZ,
-// ACES 2065-1, ACEScg, P3D65, Rec.2020, Rec.709, Arri Wide Gamut 3, Arri Wide
-// Gamut 4, Red Wide Gamut RGB, Sony SGamut3, Sony SGamut3Cine, Panasonic
-// V-Gamut, Blackmagic Wide Gamut, Filmlight E-Gamut, Filmlight E-Gamut2,
-// DaVinci Wide Gamut})
-// DEFINE_UI_PARAMS(in_oetf, Input Transfer Function,
-// DCTLUI_COMBO_BOX, 1, {ioetf_linear, ioetf_davinci_intermediate,
-// ioetf_filmlight_tlog, ioetf_acescct, ioetf_arri_logc3, ioetf_arri_logc4,
-// ioetf_redlog3g10, ioetf_panasonic_vlog, ioetf_sony_slog3, ioetf_fuji_flog},
-// {Linear, Davinci Intermediate, Filmlight T-Log, ACEScct, Arri LogC3, Arri
-// LogC4, RedLog3G10, Panasonic V-Log, Sony S-Log3, Fuji F-Log2})
+/* OpenDRT v1.1.0 -------------------------------------------------
 
-// const static uint in_gamut = 1;                // Input Gamut
-// const static uint in_oetf = 0;                 // Input OETF
-// const static uint display_encoding_preset = 1; // Display Encoding Preset
+  Written by Jed Smith
+  https://github.com/jedypod/open-display-transform
+  License: GPLv3
+  -------------------------------------------------*/
 
-// Tonescale Parameters
-// DEFINE_UI_PARAMS(tn_Lp, Display Peak Luminance, DCTLUI_SLIDER_FLOAT, 100.0,
-// 100.0, 1000.0, 1.0) DEFINE_UI_PARAMS(tn_gb, HDR Grey Boost,
-// DCTLUI_SLIDER_FLOAT, 0.13, 0.0, 1.0, 0.001) DEFINE_UI_PARAMS(pt_hdr, HDR
-// Purity, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(tn_Lg,
-// Display Grey Luminance, DCTLUI_SLIDER_FLOAT, 10.0, 3.0, 25.0, 0.1)
-// DEFINE_UI_PARAMS(crv_enable, Tonescale Overlay, DCTLUI_CHECK_BOX, 0)
-
-// const static float tn_Lp = 100.0; // Display Peak Luminance
 const static float tn_gb = 0.13; // HDR Grey Boost
 const static float pt_hdr = 0.5; // HDR Purity
 const static float tn_Lg = 10.0; // Display Grey Luminance
-// const static bool crv_enable = false; // Tonescale Overlay
 
-/*--------------------------------------------------------------------------------------
-  Due to the limited nature of DCTL, I've made the choice to only expose the
-presets and not the full parameter space. For those of you who are too curious
-for your own good and interested in experimenting...
-
-!!! TO ENABLE STICKSHIFT MODE FOR CUSTOM LOOK CREATION:
-    1. **UN-COMMENT** the lines below, including the define INIT_PARAMS line.
-This enables all of the user parameters.
-    2. Comment out the lines below that for the preset parameters (You can leave
-them enabled, but they won't do anything)
-
-  Tip 1: If you are using a modern text editor like VSCode,
-    you can comment or un-comment multiple selected lines with Ctrl+/
-  Tip 2: You can use the Nuke node to create a preset and click the "Show DCTL"
-button to show code for the below with your custom parameter values. Or add your
-own presets in the LOOK PRESETS section around line 464.
----------------------------------------------------------------------------------------*/
-
-// #define INIT_PARAMS
-
-// DEFINE_UI_PARAMS(_tn_con, Contrast, DCTLUI_SLIDER_FLOAT, 1.66, 1.0, 2.0,
-// 0.01) DEFINE_UI_PARAMS(_tn_sh, Shoulder Clip, DCTLUI_SLIDER_FLOAT, 0.5,
-// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_tn_toe, Toe, DCTLUI_SLIDER_FLOAT, 0.003,
-// 0.0, 0.1, 0.001) DEFINE_UI_PARAMS(_tn_off, Offset, DCTLUI_SLIDER_FLOAT,
-// 0.005, 0.0, 0.02, 0.0002) DEFINE_UI_PARAMS(_tn_hcon_enable, Enable Contrast
-// High, DCTLUI_CHECK_BOX, 0) DEFINE_UI_PARAMS(_tn_hcon, Contrast High,
-// DCTLUI_SLIDER_FLOAT, 0.0, -1.0, 1.0, 0.02) DEFINE_UI_PARAMS(_tn_hcon_pv,
-// Contrast High Pivot, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 4.0, 0.04)
-// DEFINE_UI_PARAMS(_tn_hcon_st, Contrast High Strength,
-// DCTLUI_SLIDER_FLOAT, 4.0, 0.0, 4.0, 0.04) DEFINE_UI_PARAMS(_tn_lcon_enable,
-// Enable Contrast Low, DCTLUI_CHECK_BOX, 0) DEFINE_UI_PARAMS(_tn_lcon, Contrast
-// Low, DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 3.0, 0.03) DEFINE_UI_PARAMS(_tn_lcon_w,
-// Contrast Low Width, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 2.0, 0.02)
-// DEFINE_UI_PARAMS(_cwp, Creative White, DCTLUI_COMBO_BOX, 2, {_cwp0, _cwp1,
-// _cwp2, _cwp3, _cwp4, _cwp5}, {D93, D75, D65, D60, D55, D50})
-// DEFINE_UI_PARAMS(_cwp_lm, Creative White Limit, DCTLUI_SLIDER_FLOAT, 0.25,
-// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_rs_sa, Render Space Strength,
-// DCTLUI_SLIDER_FLOAT, 0.35, 0.0, 0.6, 0.006) DEFINE_UI_PARAMS(_rs_rw, Render
-// Space Weight R, DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 0.8, 0.008)
-// DEFINE_UI_PARAMS(_rs_bw, Render Space Weight B, DCTLUI_SLIDER_FLOAT, 0.55,
-// 0.0, 0.8, 0.008) DEFINE_UI_PARAMS(_pt_enable, Enable Purity Compress High,
-// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_pt_lml, Purity Limit Low,
-// DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lml_r, Purity
-// Limit Low R, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01)
-// DEFINE_UI_PARAMS(_pt_lml_g, Purity Limit Low G, DCTLUI_SLIDER_FLOAT, 0.0,
-// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lml_b, Purity Limit Low B,
-// DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lmh, Purity
-// Limit High, DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 1.0, 0.01)
-// DEFINE_UI_PARAMS(_pt_lmh_r, Purity Limit High R, DCTLUI_SLIDER_FLOAT, 0.5,
-// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lmh_b, Purity Limit High B,
-// DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_ptl_enable,
-// Enable Purity Softclip, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_ptl_c, Purity
-// Softclip C, DCTLUI_SLIDER_FLOAT, 0.06, 0.0, 0.25, 0.0025)
-// DEFINE_UI_PARAMS(_ptl_m, Purity Softclip M, DCTLUI_SLIDER_FLOAT, 0.08, 0.0,
-// 0.25, 0.0025) DEFINE_UI_PARAMS(_ptl_y, Purity Softclip Y,
-// DCTLUI_SLIDER_FLOAT, 0.06, 0.0, 0.25, 0.0025) DEFINE_UI_PARAMS(_ptm_enable,
-// Enable Mid Purity, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_ptm_low, Mid Purity
-// Low, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 2.0, 0.02) DEFINE_UI_PARAMS(_ptm_low_rng,
-// Mid Purity Low Range, DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 1.0, 0.01)
-// DEFINE_UI_PARAMS(_ptm_low_st, Mid Purity Low Strength, DCTLUI_SLIDER_FLOAT,
-// 0.5, 0.1, 1.0, 0.01) DEFINE_UI_PARAMS(_ptm_high, Mid Purity High,
-// DCTLUI_SLIDER_FLOAT, -0.8, -0.9, 0.0, 0.01) DEFINE_UI_PARAMS(_ptm_high_rng,
-// Mid Purity High Range, DCTLUI_SLIDER_FLOAT, 0.3, 0.0, 1.0, 0.01)
-// DEFINE_UI_PARAMS(_ptm_high_st, Mid Purity High Strength, DCTLUI_SLIDER_FLOAT,
-// 0.4, 0.1, 1.0, 0.01) DEFINE_UI_PARAMS(_brl_enable, Enable Brilliance,
-// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_brl, Brilliance, DCTLUI_SLIDER_FLOAT,
-// 0.0, -6.0, 2.0, 0.08) DEFINE_UI_PARAMS(_brl_r, Brilliance R,
-// DCTLUI_SLIDER_FLOAT, -2.5, -6.0, 2.0, 0.08) DEFINE_UI_PARAMS(_brl_g,
-// Brilliance G, DCTLUI_SLIDER_FLOAT, -1.5, -6.0, 2.0, 0.08)
-// DEFINE_UI_PARAMS(_brl_b, Brilliance B, DCTLUI_SLIDER_FLOAT, -1.5, -6.0, 2.0,
-// 0.08) DEFINE_UI_PARAMS(_brl_rng, Brilliance Range, DCTLUI_SLIDER_FLOAT, 0.5,
-// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_brl_st, Brilliance Strength,
-// DCTLUI_SLIDER_FLOAT, 0.35, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_brlp_enable,
-// Enable Post Brilliance, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_brlp,
-// Brilliance Post, DCTLUI_SLIDER_FLOAT, -0.5, -1.0, 0.0, 0.01)
-// DEFINE_UI_PARAMS(_brlp_r, Post Brilliance R, DCTLUI_SLIDER_FLOAT, -1.25,
-// -3.0, 0.0, 0.03) DEFINE_UI_PARAMS(_brlp_g, Post Brilliance G,
-// DCTLUI_SLIDER_FLOAT, -1.25, -3.0, 0.0, 0.03) DEFINE_UI_PARAMS(_brlp_b, Post
-// Brilliance B, DCTLUI_SLIDER_FLOAT, -0.25, -3.0, 0.0, 0.03)
-// DEFINE_UI_PARAMS(_hc_enable, Enable Hue Contrast, DCTLUI_CHECK_BOX, 1)
-// DEFINE_UI_PARAMS(_hc_r, Hue Contrast R, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 2.0,
-// 0.02) DEFINE_UI_PARAMS(_hc_r_rng, Hue Contrast R Range, DCTLUI_SLIDER_FLOAT,
-// 0.3, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_rgb_enable, Enable Hueshift RGB,
-// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_hs_r, Hueshift R, DCTLUI_SLIDER_FLOAT,
-// 0.6, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_r_rng, Hueshift R Range,
-// DCTLUI_SLIDER_FLOAT, 0.7, 0.0, 2.0, 0.02) DEFINE_UI_PARAMS(_hs_g, Hueshift G,
-// DCTLUI_SLIDER_FLOAT, 0.35, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_g_rng,
-// Hueshift G Range, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 2.0, 0.02)
-// DEFINE_UI_PARAMS(_hs_b, Hueshift B, DCTLUI_SLIDER_FLOAT, 0.66, 0.0, 1.0,
-// 0.01) DEFINE_UI_PARAMS(_hs_b_rng, Hueshift B Range, DCTLUI_SLIDER_FLOAT, 1.0,
-// 0.0, 2.0, 0.02) DEFINE_UI_PARAMS(_hs_cmy_enable, Enable Hueshift CMY,
-// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_hs_c, Hueshift C, DCTLUI_SLIDER_FLOAT,
-// 0.25, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_c_rng, Hueshift C Range,
-// DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_m, Hueshift M,
-// DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_m_rng,
-// Hueshift M Range, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 1.0, 0.01)
-// DEFINE_UI_PARAMS(_hs_y, Hueshift Y, DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01)
-// DEFINE_UI_PARAMS(_hs_y_rng, Hueshift Y Range, DCTLUI_SLIDER_FLOAT, 1.0,
-// 0.0, 1.0, 0.01)
-
-// DEFINE_UI_PARAMS(_clamp, Clamp, DCTLUI_CHECK_BOX, 1)
-// DEFINE_UI_PARAMS(_tn_su, Surround, DCTLUI_COMBO_BOX, 1, {_Dark, _Dim,
-// _Bright}, {Dark, Dim, Bright}) DEFINE_UI_PARAMS(_display_gamut, Display
-// Gamut, DCTLUI_COMBO_BOX, 0, {Rec709, P3D65, Rec2020, P3D60, P3DCI, XYZ},
-// {Rec.709, P3-D65, Rec.2020 (P3 Limited), P3-D60, P3-DCI, XYZ})
-// DEFINE_UI_PARAMS(_eotf, Display EOTF, DCTLUI_COMBO_BOX, 2, {eotf0, eotf1,
-// eotf2, eotf3, eotf4, eotf5}, {Linear, 2.2 Power sRGB Display, 2.4 Power
-// Rec.1886, 2.6 Power DCI, ST 2084 PQ, HLG})
-
-/*------------------------------------------------------------------------------------------------------------
-!!! TO ENABLE STICKSHIFT MODE FOR CUSTOM LOOK CREATION: **COMMENT OUT** all of
-the preset parameters below.
--------------------------------------------------------------------------------------------------------------*/
-
-/* Optionally Enable the Base Preset
-    If you really want the Base preset, you can enable the look_preset
-   definition below and disable the other one. Leaving it disabled by default as
-   it is a perilous undertaking to create a nice picture using this as a
-   starting point.
-*/
-// DEFINE_UI_PARAMS(look_preset, Look Preset, DCTLUI_COMBO_BOX, 0, {look0,
-// look1, look2, look3, look4, look5, look6, look7}, {Standard, Arriba, Sylvan,
-// Colorful, Aery, Dystopic, Umbra, Base})
-
-// DEFINE_UI_PARAMS(look_preset, Look Preset, DCTLUI_COMBO_BOX, 0, {look0,
-// look1, look2, look3, look4, look5, look6}, {Standard, Arriba, Sylvan,
-// Colorful, Aery, Dystopic, Umbra}) DEFINE_UI_PARAMS(tonescale_preset,
-// Tonescale Preset, DCTLUI_COMBO_BOX, 0, {tsprst0, tsprst1, tsprst2, tsprst3,
-// tsprst4, tsprst5, tsprst6, tsprst7, tsprst8, tsprst9, tsprst10, tsprst11,
-// tsprst12, tsprst13}, {USE LOOK PRESET, Low Contrast, Medium Contrast, High
-// Contrast, Arriba Tonescale, Sylvan Tonescale, Colorful Tonescale, Aery
-// Tonescale, Dystopic Tonescale, Umbra Tonescale, ACES-1.x, ACES-2.0, Marvelous
-// Tonescape, DaGrinchi ToneGroan}) DEFINE_UI_PARAMS(_cwp, Creative White,
-// DCTLUI_COMBO_BOX, 0, {_cwp0, _cwp1, _cwp2, _cwp3, _cwp4, _cwp5, _cwp6}, {USE
-// LOOK PRESET, D93, D75, D65, D60, D55, D50}) DEFINE_UI_PARAMS(_cwp_lm,
-// Creative White Limit, DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 1.0, 0.0)
-// DEFINE_UI_PARAMS(display_encoding_preset, Display Encoding Preset,
-// DCTLUI_COMBO_BOX, 0, {rec1886, srgb, displayp3, p3d60, p3dci, xyz, rec2100pq,
-// rec2100hlg, dolbypq}, {Rec.1886 - 2.4 Power / Rec.709, sRGB Display - 2.2
-// Power / Rec.709, Display P3 - 2.2 Power / P3-D65, DCI - 2.6 Power / P3-D60,
-// DCI - 2.6 Power / P3-DCI, DCI - 2.6 Power / XYZ, Rec.2100 - PQ / Rec.2020 (P3
-// Limited), Rec.2100 - HLG / Rec.2020 (P3 Limited), Dolby - PQ / P3-D65})
-
-// 0-Standard, 1-Arriba, 2-Sylvan, 3-Colorful, 4-Aery, 5-Dystopic, 6-Umbra
-// const static uint look_preset = 0;      // Look Preset
 const static uint tonescale_preset = 0; // Tonescale Preset
 const static uint _cwp = 0;             // Creative White
 const static float _cwp_lm = 0.25;      // Creative White Limit
 
-/*------------------------------------------------------------------------------------------------------------*/
-
-/*----------- Tooltips -----------------*/
-
-// DEFINE_UI_TOOLTIP(Display Peak Luminance, "Peak display luminance in nits. In
-// SDR, the max value stays pinned at 1.0. In HDR, the max value is adjusted to
-// match peak luminance in the HDR container.") DEFINE_UI_TOOLTIP(HDR Grey
-// Boost, "Amount of stops to boost Grey Luminance, per stop of exposure
-// increase of Peak Luminance. For example, if HDR Grey Boost is 0.1, middle
-// grey will be boosted by 0.1 stops per stop of Peak Luminance increase.")
-// DEFINE_UI_TOOLTIP(HDR Purity, "How much to affect purity compression and hue
-// shift as Peak Luminance increases. A value of 0.0 will keep the purity
-// compression and hue shift behavior the same for SDR and HDR. A value of 1.0
-// will preserve more purity as peak luminance increases (at the risk of
-// gradient disruptions in high purity high intensity light sources), and will
-// reduce hue shift amount in highlights.") DEFINE_UI_TOOLTIP(Display Grey
-// Luminance, "Display luminance for middle grey (0.18) in nits. Sets the target
-// value for middle grey within the available luminance range of the display
-// device.") DEFINE_UI_TOOLTIP(Creative White, "Set the creative whitepoint of
-// the display peak luminance. With D65 all channels are equal. With D50, the
-// peak luminance value will match a D50 whitepoint. This can be creatively
-// desireable. This adjustment is applied post-tonescale.")
-// DEFINE_UI_TOOLTIP(Creative White Range, "The intensity range affected by the
-// Creative White adjustment. At 1.0, the entire intensity range is affected. As
-// Range is decreased, more of midtones and shadows are left unaffected. It can
-// be creatively desireable to keep midtones more neutral while shifting
-// highlights warmer.") DEFINE_UI_TOOLTIP(Clamp, "Clamp the final image into the
-// final range supported by the display device.") DEFINE_UI_TOOLTIP(Tonescale
-// Overlay, "Draws a visualization of the tonescale curve. A semi-log plot over
-// ~ -0.005 to 128, with display encoding added.") DEFINE_UI_TOOLTIP(Look
-// Preset, "Choose a preset look. STANDARD: A minimal smooth starting look with
-// natural color rendition and minimal adjustments to create an aesthetically
-// pleasing image. ARRIBA: A minimal smooth look with slightly stronger
-// saturation and a soft rolloff in shadows similar to typical camera
-// manufacturer picture formation approaches. SYLVAN: A smooth starting look
-// with slightly stronger contrast and stronger hue distortions which may be
-// preferential for skin. COLORFUL: A low contrast saturated bright look. Might
-// be a good fit for animation. AERY: A low contrast look with cool highlights
-// and more pure color rendered quite bright. It features strong desaturation
-// near the grey axis, and darkening of only the most pure colors. DYSTOPIC: A
-// high contrast look with very low saturation and strong filmish hue
-// distortions. UMBRA: A dark moody cinematic look. Features low shadow
-// contrast, warm whites, strong filmic hue distortions, cyan blues, and more
-// saturated colors that render very dark. Works well with a Display Peak
-// Luminance of 200 nits or above. BASE: only the base components of the OpenDRT
-// image rendering. Practically no preferential adjustements (This absolutely
-// does not mean 'no look' all picture formations have a look whether good or
-// bad. This preset falls under the latter category). Purity compression is
-// mostly chromaticity-linear and very minimal. Mid-range high purity is very
-// strong. A good starting point for further look development if absolute
-// control is required (DO NOT UNDERESTIMATE the peril and complexity of this
-// undertaking).") DEFINE_UI_TOOLTIP(Tonescale Preset, "Presets specifically for
-// the tonescale function. A number of creative options show the possibilities.
-// LOW CONTRAST: A low contrast tonescale curve that is intended as a starting
-// point for further grading. Requires further contrast to be added in order to
-// achieve something resembling a finished image, unless a very low contrast
-// look is desired. MEDIUM CONTRAST: Slightly stronger contrast. Still quite
-// minimal and suitable as a starting point for further grading. Still a good
-// base to build on. HIGH CONTRAST: High contrast tonescale curve. Enough
-// contrast to maybe be called a finished image, but also could be a good base
-// to build on for other types of looks. ARRIBA TONESCALE: Tonescale curve used
-// in the Arriba look preset. A relatively low-contrast tonescale with a smooth
-// transition into shadows. Uses an approach to the toe more typical of camera
-// style DRTs, where there is a strong positive offset, and strong shadow toe
-// compression. SYLVAN TONESCALE: Tonescale curve used in the Sylvan look
-// preset. Slightly higher contrast especially in shadows while still being a
-// good starting point for further grading or look development. COLORFUL
-// TONESCALE: Tonescale curve used in the Colorful look preset. Similar to the
-// High Contrast tonescale curve with reduced shadow contrast. AERY TONESCALE:
-// Tonescale curve used in the Aery look preset. A low contrast curve utilizing
-// the Contrast Low module in a different way, pushing the width very high to
-// act more as a highlight contrast control. UMBRA TONESCALE: A dark cinematic
-// tonescale preset with deep low contrast shadows and strong midtone contrast.
-// Works well with a 200 nit peak luminance. ACES 1.x: A rough match of the
-// ACES 1.x tonescale curve. One deviation is mapping 0.0 to 0.0 through the
-// tonescale curve, rather than mapping +0.02 to 0.0... because that is moronic.
-// Also places the peak intersection constraint a bit higher than the original
-// ~16 to be a bit more modern and compatible with modern camera dynamic ranges.
-// ACES 2.0: An exact match to the ACES 2.0 tonescale function. Very low
-// contrast in the highlights, and very strong shadow toe compression while
-// mapping 0 to 0 through the tonescale function. Be careful with this one if
-// adding additional shadow contrast upstream, without a strong positive offset.
-// MARVELOUS TONESCAPE: A contrasty cinematic tonescale with strong highlight
-// contrast. Similar to ACES 1.x but with reduced shadow contrast and softer
-// rolloff in the highlights. Works well with higher display peak luminance.
-// DAVINCI TONEGROAN: Another low-contrast tonescale designed as a starting
-// point for further manipulations. Questionable choices make it not as good as
-// other options.") DEFINE_UI_TOOLTIP(Display Encoding Preset, "Choose the
-// target viewing environment.")
-
-// DEFINE_UI_TOOLTIP(Contrast, "Adjusts contrast or slope. A constrained power
-// function applied in display linear.") DEFINE_UI_TOOLTIP(Shoulder Clip,
-// "Unitless control for the scene-linear value at which the tonescale system
-// crosses the peak display linear value (1.0) and clips. This is not an exact
-// constraint in order to keep the system simple, but corresponds to roughly 16
-// at Shoulder Clip = 0 and 1024 at Shoulder Clip = 1") DEFINE_UI_TOOLTIP(Toe,
-// "Quadratic toe compression. Strongly compresses deep shadows. Helpful to have
-// some amount to smooth the transition into display minimum. Higher values with
-// a strong positive Offset also valid. Similar to common camera DRT tonescale
-// strategies.") DEFINE_UI_TOOLTIP(Offset, "Pre-tonescale scene-linear offset.
-// If 0.0, scene-linear 0.0 maps to display-linear 0.0 through the tonescale
-// system. Many camera imaging pipelines apply a negative offset to set the
-// average of shadow grain at 0.0. A positive Offset can be desireable to
-// compensate for this and increase detail in shadows, in addition to being
-// aesthetically desireable. Offset should NOT be a negative number (Looking at
-// you ACES 1.x)") DEFINE_UI_TOOLTIP(Enable Contrast High, "Contrast High allows
-// control of the upper section of the tonescale function. Off by default, but
-// can be useful if a stronger highlight contrast, or a softer highlight rolloff
-// behavior is desired.") DEFINE_UI_TOOLTIP(Contrast High, "Amount adjust
-// highlights. Positive values increase highlight exposure, negative values
-// decrease. 0 has no effect.") DEFINE_UI_TOOLTIP(Contrast High Pivot, "Amount
-// of stops above middle grey (0.18) to start the adjustment.")
-// DEFINE_UI_TOOLTIP(Contrast High Strength, "How quickly above the Contrast
-// High Pivot the effect begins.") DEFINE_UI_TOOLTIP(Enable Contrast Low,
-// "Contrast Low adds contrast to the midtones and shadows. Middle grey (0.18)
-// is un-changed through the adjustment.") DEFINE_UI_TOOLTIP(Contrast Low,
-// "Amount of contrast to add. 0.0 has no effect. 1.0 will expose down by 1 stop
-// at the origin (0,0)") DEFINE_UI_TOOLTIP(Contrast Low Width, "The width of the
-// adjustment. Width below 0.5 will mostly affect values between 0 and middle
-// grey. Values above 0.5 will increasingly start to increase highlight
-// contrast, which could be desired or not depending on what you are trying to
-// do.") DEFINE_UI_TOOLTIP(Creative White, "Set the creative whitepoint of the
-// display peak luminance. With D65 all channels are equal. With D50, the peak
-// luminance value will match a D50 whitepoint. This can be creatively
-// desireable. This adjustment is applied post-tonescale.")
-// DEFINE_UI_TOOLTIP(Creative White Limit, "Limit the intensity range affected
-// by the Creative Whitepoint. At 0.0, the entire intensity range is affected.
-// As the limit is decreased, more of midtones and shadows are kept neutral. It
-// can be creatively desireable to keep midtones more neutral while shifting
-// highlights warmer for example.") DEFINE_UI_TOOLTIP(Render Space Strength,
-// "Render space is the encoding in which the RGB Ratios are taken. Strength
-// controls how much to desaturate from P3 gamut. Creatively, the more you
-// desaturate, the more brilliance is increased in the resulting image. To be
-// used with caution as this affects every other aspect of the image
-// rendering.") DEFINE_UI_TOOLTIP(Render Space Weight R, "The Red weight of the
-// Render Space Strength. Modify with caution as this affects every other part
-// of the image rendering.") DEFINE_UI_TOOLTIP(Render Space Weight B, "The Blue
-// weight of the Render Space Strength. Modify with caution as this affects
-// every other part of the image rendering.") DEFINE_UI_TOOLTIP(Enable Purity
-// Compress High, "Compresses purity as intensity increases. Bare minimum
-// functionality for a picture formation.") DEFINE_UI_TOOLTIP(Purity Limit Low,
-// "Limit the strength of purity compression as intensity decreases, for all hue
-// angles. A higher value will compress purity less in midtones and shadows.")
-// DEFINE_UI_TOOLTIP(Purity Limit Low R, "Limit the strength of purity
-// compression as intensity decreases, for reds. A higher value will compress
-// purity less in midtones and shadows.") DEFINE_UI_TOOLTIP(Purity Limit Low G,
-// "Limit the strength of purity compression as intensity decreases, for all
-// greens. A higher value will compress purity less in midtones and shadows.")
-// DEFINE_UI_TOOLTIP(Purity Limit Low B, "Limit the strength of purity
-// compression as intensity decreases, for blues. A higher value will compress
-// purity less in midtones and shadows.") DEFINE_UI_TOOLTIP(Purity Limit High,
-// "Limit the strength of purity compression as intensity increases. Can be
-// helpful to keep some color in high intensity high purity light sources. Use
-// with caution as this can cause gradient disruptions.")
-// DEFINE_UI_TOOLTIP(Purity Limit High R, "Limit the strength of red purity
-// compression as intensity increases. Can be helpful to keep some color in high
-// intensity fire and pure red light sources. Use with caution as this can cause
-// gradient disruptions.") DEFINE_UI_TOOLTIP(Purity Limit High B, "Limit the
-// strength of blue purity compression as intensity increases. Can be helpful to
-// keep some color in high intensity pure blue light sources. Use with caution
-// as this can cause gradient disruptions.") DEFINE_UI_TOOLTIP(Enable Purity
-// Softclip, "Purity Softclip increases tonality and smoothness in extremely
-// pure input values that can not be adequately compressed into the
-// display-referred gamut volume. The algorithm is tuned for common camera
-// observer colorimetry sources.") DEFINE_UI_TOOLTIP(Purity Softclip C, "Purity
-// Softclip strength for Cyan.") DEFINE_UI_TOOLTIP(Purity Softclip M, "Purity
-// Softclip strength for Magenta.") DEFINE_UI_TOOLTIP(Purity Softclip Y, "Purity
-// Softclip strength for Yellow.") DEFINE_UI_TOOLTIP(Enable Mid Purity, "The Mid
-// Purity module adjusts mid-range purity of midtones and highlights. Without
-// this module enabled, it is likely that midtones will not appear colorful
-// enough, and highlights will appear too colorful resulting in chaulky pasty
-// looking images especially in yellows and cyans. ") DEFINE_UI_TOOLTIP(Mid
-// Purity Low, "Amount to increase purity of midtones and shadows in mid-range
-// purity areas. A value of 0.0 will have no effect. A value of 1.0 is the
-// maximum possible value while preserving smoothness.") DEFINE_UI_TOOLTIP(Mid
-// Purity Low Range, "The strength of the Mid Purity Low adjustment. Higher
-// values affect more of the luminance range.") DEFINE_UI_TOOLTIP(Mid Purity Low
-// Strength, "The strength of the Mid Purity Low adjustment. Higher values
-// affect more of the purity range.") DEFINE_UI_TOOLTIP(Mid Purity High, "Amount
-// to decrease purity of upper midtones and highlights in mid-range purity
-// areas. A value of 0.0 will have no effect. A value of 1.0 is the maximum
-// possible value while preserving smoothness.") DEFINE_UI_TOOLTIP(Mid Purity
-// High Range, "The strength of the Mid Purity High adjustment. Higher values
-// affect more of the luminance range.") DEFINE_UI_TOOLTIP(Mid Purity High
-// Strength, "The strength of the Mid Purity High adjustment. Higher values
-// affect more of the purity range.") DEFINE_UI_TOOLTIP(Enable Brilliance,
-// "Brilliance scales the intensity of more pure stimuli. The brilliance module
-// is applied before the tonescale is taken for purity compression. This means
-// that if you darken reds with this adjustment, the purity compression will
-// also be reduced. This behavior is natural and smooth.")
-// DEFINE_UI_TOOLTIP(Brilliance, "Global intensity scale of high-purity
-// stimuli.") DEFINE_UI_TOOLTIP(Brilliance R, "Scale intensity of high-purity
-// reds.") DEFINE_UI_TOOLTIP(Brilliance G, "Scale intensity of high-purity
-// greens.") DEFINE_UI_TOOLTIP(Brilliance B, "Scale intensity of high-purity
-// blues.") DEFINE_UI_TOOLTIP(Brilliance Range, "As Brilliance Range is
-// increased, the brilliance adjustments affect more the low intensity values of
-// the image data.") DEFINE_UI_TOOLTIP(Brilliance Strength, "As Brilliance
-// Strength is increased, the brilliance adjustments affect more the low purity
-// values of the image data.") DEFINE_UI_TOOLTIP(Enable Post Brilliance, "Post
-// Brilliance scales the intensity of more pure stimuli after purity compression
-// hue shifts have been applied. With the OpenDRT algorithm it is possible to
-// get high intensity high purity values going out of the top of the
-// display-referred gamut volume, which can cause discontinuities in gradients,
-// especially on the RGB primaries. This module can help compensate for this.")
-// DEFINE_UI_TOOLTIP(Brilliance Post, "Global post purity compression brilliance
-// adjustment ") DEFINE_UI_TOOLTIP(Post Brilliance R, "Scale intensity of
-// high-purity red, post purity compression. This can help reduce rings or halos
-// around high purity light sources.") DEFINE_UI_TOOLTIP(Post Brilliance G,
-// "Scale intensity of high-purity green, post purity compression. This can help
-// reduce rings or halos around high purity light sources.")
-// DEFINE_UI_TOOLTIP(Post Brilliance B, "Scale intensity of high-purity blue,
-// post purity compression. This can help reduce rings or halos around high
-// purity light sources.") DEFINE_UI_TOOLTIP(Enable Hue Contrast, "Hue Contrast
-// compresses hue angle towards the primary at the bottom end and expands the
-// hue angle towards the secondary as intensity increases. It also increases
-// purity as it compresses, and decreases purity as it expands. This leads to a
-// nice creatively controllable simulation of this effect from per-channel
-// tonescales. For OpenDRT we only keep the red hue angle control since it is
-// the most useful.") DEFINE_UI_TOOLTIP(Hue Contrast R, "Amount to increase Hue
-// Contrast at the red hue angle.") DEFINE_UI_TOOLTIP(Hue Contrast R Range, "Hue
-// contrast range control: determines where over the intensity range the hue
-// contrast affects. Higher values place the crossover point higher in the
-// intensity range.") DEFINE_UI_TOOLTIP(Enable Hueshift RGB, "Hue Shift RGB adds
-// hue distortion to the red green and blue primary hue angles as intensity
-// increases. By default OpenDRT will compress purity in a straight line in
-// RGB/Chromaticity space. This can lead to perceived hue shifts due to the
-// Abney Effect, for example a pure blue will perceptually shift towards purple
-// as it desaturates. To compensate for this, and to use as a creative tool,
-// this module allows creative control over the path that red green and blue hue
-// angles take as their purity is compressed.") DEFINE_UI_TOOLTIP(Hueshift R,
-// "Amount to distort the red hue angle towards yellow as intensity increases.")
-// DEFINE_UI_TOOLTIP(Hueshift R Range, "Range of the red hueshift: higher values
-// affect more of the lower intensity range.") DEFINE_UI_TOOLTIP(Hueshift G,
-// "Amount to distort the green hue angle towards yellow as intensity
-// increases.") DEFINE_UI_TOOLTIP(Hueshift G Range, "Range of the green
-// hueshift: higher values affect more of the lower intensity range.")
-// DEFINE_UI_TOOLTIP(Hueshift B, "Amount to distort the blue hue angle towards
-// cyan as intensity increases.") DEFINE_UI_TOOLTIP(Hueshift B Range, "Range of
-// the blue hueshift: higher values affect more of the lower intensity range.")
-// DEFINE_UI_TOOLTIP(Enable Hueshift CMY, "Hue Shift CMY adds hue distortion to
-// the cyan magenta and yellow secondary hue angles as intensity decreases. This
-// module allows some very minimal adjustments of secondary hue angles as a
-// creative tool.") DEFINE_UI_TOOLTIP(Hueshift C, "Amount to distort the cyan
-// hue angle towards blue as intensity decreases.") DEFINE_UI_TOOLTIP(Hueshift C
-// Range, "Range of the cyan hueshift: higher values affect more of the upper
-// intensity range.") DEFINE_UI_TOOLTIP(Hueshift M, "Amount to distort the
-// magenta hue angle towards blue as intensity decreases.")
-// DEFINE_UI_TOOLTIP(Hueshift M Range, "Range of the magenta hueshift: higher
-// values affect more of the upper intensity range.") DEFINE_UI_TOOLTIP(Hueshift
-// Y, "Amount to distort the yellow hue angle towards red as intensity
-// decreases.") DEFINE_UI_TOOLTIP(Hueshift Y Range, "Range of the yellow
-// hueshift: higher values affect more of the upper intensity range.")
-
-/******************************************************************
+/****
   DCTL to Slang Conversion Functions
  ******************************************************************/
 
@@ -482,7 +54,7 @@ float _fminf(float a, float b) { return min(a, b); }
 
 float _fmod(float a, float b) { return fmod(a, b); }
 float _atan2f(float a, float b) {
-  if (abs(a) + abs(b) < 0.000001){
+  if (abs(a) + abs(b) < 0.000001) {
     return a * b;
   }
   return atan2(a, b);
@@ -491,10 +63,196 @@ float _atan2f(float a, float b) {
 // overriding the declaration below
 float3 vdot(float3x3 m, float3 v) { return mul(v, transpose(m)); }
 
+// Input settings
+// DEFINE_UI_PARAMS(in_gamut, Input Gamut, DCTLUI_COMBO_BOX, 14,
+//                  { i_xyz, i_ap0, i_ap1, i_p3d65, i_rec2020, i_rec709, i_awg3,
+//                    i_awg4, i_rwg, i_sgamut3, i_sgamut3cine, i_vgamut,
+//                    i_egamut, i_egamut2, i_davinciwg },
+//                  { XYZ, ACES 2065 - 1, ACEScg, P3D65, Rec .2020, Rec .709,
+//                    Arri Wide Gamut 3, Arri Wide Gamut 4, Red Wide Gamut RGB,
+//                    Sony SGamut3, Sony SGamut3Cine, Panasonic V - Gamut,
+//                    Filmlight E - Gamut, Filmlight E - Gamut2,
+//                    DaVinci Wide Gamut })
+// DEFINE_UI_PARAMS(in_oetf, Input Transfer Function, DCTLUI_COMBO_BOX, 1,
+//                  { ioetf_linear, ioetf_davinci_intermediate,
+//                    ioetf_filmlight_tlog, ioetf_acescct, ioetf_arri_logc3,
+//                    ioetf_arri_logc4, ioetf_redlog3g10, ioetf_panasonic_vlog,
+//                    ioetf_sony_slog3, ioetf_fuji_flog },
+//                  { Linear, Davinci Intermediate, Filmlight T - Log, ACEScct,
+//                    Arri LogC3, Arri LogC4, RedLog3G10, Panasonic V - Log,
+//                    Sony S - Log3, Fuji F - Log2 })
+
+// // Tonescale Parameters
+// DEFINE_UI_PARAMS(tn_Lp, Display Peak Luminance, DCTLUI_SLIDER_FLOAT, 100.0,
+//                  100.0, 1000.0, 1.0)
+// DEFINE_UI_PARAMS(tn_gb, HDR Grey Boost, DCTLUI_SLIDER_FLOAT, 0.13, 0.0, 1.0,
+//                  0.001)
+// DEFINE_UI_PARAMS(pt_hdr, HDR Purity, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0,
+// 0.01) DEFINE_UI_PARAMS(tn_Lg, Display Grey Luminance,
+// DCTLUI_SLIDER_FLOAT, 10.0, 3.0,
+//                  25.0, 0.1)
+
+/*--------------------------------------------------------------------------------------
+  Due to the limited nature of DCTL, I've made the choice to only expose the
+presets and not the full parameter space. For those of you who are too curious
+for your own good and interested in experimenting...
+
+!!! TO ENABLE STICKSHIFT MODE FOR CUSTOM LOOK CREATION:
+    1. **UN-COMMENT** the lines below, including the define INIT_PARAMS line.
+This enables all of the user parameters.
+    2. Comment out the lines below that for the preset parameters (You can leave
+them enabled, but they won't do anything)
+
+  Tip 1: If you are using a modern text editor like VSCode,
+    you can comment or un-comment multiple selected lines with Ctrl+/
+  Tip 2: You can use the Nuke node to create a preset and click the "Show DCTL"
+button to show code for the below with your custom parameter values. Or add your
+own presets in the LOOK PRESETS section around line 464.
+---------------------------------------------------------------------------------------*/
+
+// #define INIT_PARAMS
+
+// DEFINE_UI_PARAMS(_tn_con, Contrast, DCTLUI_SLIDER_FLOAT, 1.66, 1.0, 2.0,
+// 0.01) DEFINE_UI_PARAMS(_tn_sh, Shoulder Clip, DCTLUI_SLIDER_FLOAT, 0.5,
+// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_tn_toe, Toe, DCTLUI_SLIDER_FLOAT, 0.003,
+// 0.0, 0.1, 0.001) DEFINE_UI_PARAMS(_tn_off, Offset, DCTLUI_SLIDER_FLOAT,
+// 0.005, 0.0, 0.02, 0.0002) DEFINE_UI_PARAMS(_tn_hcon_enable, Enable Contrast
+// High, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_tn_hcon, Contrast High,
+// DCTLUI_SLIDER_FLOAT, 0.0, -1.0, 1.0, 0.02) DEFINE_UI_PARAMS(_tn_hcon_pv,
+// Contrast High Pivot, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 4.0, 0.04)
+// DEFINE_UI_PARAMS(_tn_hcon_st, Contrast High Strength,
+// DCTLUI_SLIDER_FLOAT, 4.0, 0.0, 4.0, 0.04) DEFINE_UI_PARAMS(_tn_lcon_enable,
+// Enable Contrast Low, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_tn_lcon, Contrast
+// Low, DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 3.0, 0.03) DEFINE_UI_PARAMS(_tn_lcon_w,
+// Contrast Low Width, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 2.0, 0.02)
+// DEFINE_UI_PARAMS(_cwp, Creative White, DCTLUI_COMBO_BOX, 2, {_cwp0, _cwp1,
+// _cwp2, _cwp3, _cwp4, _cwp5}, {D93, D75, D65, D60, D55, D50})
+// DEFINE_UI_PARAMS(_cwp_lm, Creative White Limit, DCTLUI_SLIDER_FLOAT, 0.25,
+// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_rs_sa, Render Space Strength,
+// DCTLUI_SLIDER_FLOAT, 0.35, 0.0, 0.6, 0.006) DEFINE_UI_PARAMS(_rs_rw, Render
+// Space Weight R, DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 0.8, 0.008)
+// DEFINE_UI_PARAMS(_rs_bw, Render Space Weight B, DCTLUI_SLIDER_FLOAT, 0.55,
+// 0.0, 0.8, 0.008) DEFINE_UI_PARAMS(_pt_enable, Enable Purity Compress High,
+// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_pt_lml, Purity Limit Low,
+// DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lml_r, Purity
+// Limit Low R, DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01)
+// DEFINE_UI_PARAMS(_pt_lml_g, Purity Limit Low G, DCTLUI_SLIDER_FLOAT, 0.0,
+// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lml_b, Purity Limit Low B,
+// DCTLUI_SLIDER_FLOAT, 0.1, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lmh, Purity
+// Limit High, DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 1.0, 0.01)
+// DEFINE_UI_PARAMS(_pt_lmh_r, Purity Limit High R, DCTLUI_SLIDER_FLOAT, 0.5,
+// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_pt_lmh_b, Purity Limit High B,
+// DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_ptl_enable,
+// Enable Purity Softclip, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_ptl_c, Purity
+// Softclip C, DCTLUI_SLIDER_FLOAT, 0.06, 0.0, 0.25, 0.0025)
+// DEFINE_UI_PARAMS(_ptl_m, Purity Softclip M, DCTLUI_SLIDER_FLOAT, 0.08, 0.0,
+// 0.25, 0.0025) DEFINE_UI_PARAMS(_ptl_y, Purity Softclip Y,
+// DCTLUI_SLIDER_FLOAT, 0.06, 0.0, 0.25, 0.0025) DEFINE_UI_PARAMS(_ptm_enable,
+// Enable Mid Purity, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_ptm_low, Mid Purity
+// Low, DCTLUI_SLIDER_FLOAT, 0.4, 0.0, 2.0, 0.02) DEFINE_UI_PARAMS(_ptm_low_rng,
+// Mid Purity Low Range, DCTLUI_SLIDER_FLOAT, 0.25, 0.0, 1.0, 0.01)
+// DEFINE_UI_PARAMS(_ptm_low_st, Mid Purity Low Strength, DCTLUI_SLIDER_FLOAT,
+// 0.5, 0.1, 1.0, 0.01) DEFINE_UI_PARAMS(_ptm_high, Mid Purity High,
+// DCTLUI_SLIDER_FLOAT, -0.8, -0.9, 0.0, 0.01) DEFINE_UI_PARAMS(_ptm_high_rng,
+// Mid Purity High Range, DCTLUI_SLIDER_FLOAT, 0.35, 0.0, 1.0, 0.01)
+// DEFINE_UI_PARAMS(_ptm_high_st, Mid Purity High Strength, DCTLUI_SLIDER_FLOAT,
+// 0.4, 0.1, 1.0, 0.01) DEFINE_UI_PARAMS(_brl_enable, Enable Brilliance,
+// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_brl, Brilliance, DCTLUI_SLIDER_FLOAT,
+// 0.0, -6.0, 2.0, 0.08) DEFINE_UI_PARAMS(_brl_r, Brilliance R,
+// DCTLUI_SLIDER_FLOAT, -2.5, -6.0, 2.0, 0.08) DEFINE_UI_PARAMS(_brl_g,
+// Brilliance G, DCTLUI_SLIDER_FLOAT, -1.5, -6.0, 2.0, 0.08)
+// DEFINE_UI_PARAMS(_brl_b, Brilliance B, DCTLUI_SLIDER_FLOAT, -1.5, -6.0, 2.0,
+// 0.08) DEFINE_UI_PARAMS(_brl_rng, Brilliance Range, DCTLUI_SLIDER_FLOAT, 0.5,
+// 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_brl_st, Brilliance Strength,
+// DCTLUI_SLIDER_FLOAT, 0.35, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_brlp_enable,
+// Enable Post Brilliance, DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_brlp,
+// Brilliance Post, DCTLUI_SLIDER_FLOAT, -0.5, -1.0, 0.0, 0.01)
+// DEFINE_UI_PARAMS(_brlp_r, Post Brilliance R, DCTLUI_SLIDER_FLOAT, -1.25,
+// -3.0, 0.0, 0.03) DEFINE_UI_PARAMS(_brlp_g, Post Brilliance G,
+// DCTLUI_SLIDER_FLOAT, -1.25, -3.0, 0.0, 0.03) DEFINE_UI_PARAMS(_brlp_b, Post
+// Brilliance B, DCTLUI_SLIDER_FLOAT, -0.25, -3.0, 0.0, 0.03)
+// DEFINE_UI_PARAMS(_hc_enable, Enable Hue Contrast, DCTLUI_CHECK_BOX, 1)
+// DEFINE_UI_PARAMS(_hc_r, Hue Contrast R, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 2.0,
+// 0.02) DEFINE_UI_PARAMS(_hc_r_rng, Hue Contrast R Range, DCTLUI_SLIDER_FLOAT,
+// 0.3, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_rgb_enable, Enable Hueshift RGB,
+// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_hs_r, Hueshift R, DCTLUI_SLIDER_FLOAT,
+// 0.6, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_r_rng, Hueshift R Range,
+// DCTLUI_SLIDER_FLOAT, 0.6, 0.0, 2.0, 0.02) DEFINE_UI_PARAMS(_hs_g, Hueshift G,
+// DCTLUI_SLIDER_FLOAT, 0.35, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_g_rng,
+// Hueshift G Range, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 2.0, 0.02)
+// DEFINE_UI_PARAMS(_hs_b, Hueshift B, DCTLUI_SLIDER_FLOAT, 0.66, 0.0, 1.0,
+// 0.01) DEFINE_UI_PARAMS(_hs_b_rng, Hueshift B Range, DCTLUI_SLIDER_FLOAT, 1.0,
+// 0.0, 4.0, 0.02) DEFINE_UI_PARAMS(_hs_cmy_enable, Enable Hueshift CMY,
+// DCTLUI_CHECK_BOX, 1) DEFINE_UI_PARAMS(_hs_c, Hueshift C, DCTLUI_SLIDER_FLOAT,
+// 0.25, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_c_rng, Hueshift C Range,
+// DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_m, Hueshift M,
+// DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01) DEFINE_UI_PARAMS(_hs_m_rng,
+// Hueshift M Range, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 1.0, 0.01)
+// DEFINE_UI_PARAMS(_hs_y, Hueshift Y, DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01)
+// DEFINE_UI_PARAMS(_hs_y_rng, Hueshift Y Range, DCTLUI_SLIDER_FLOAT, 1.0,
+// 0.0, 1.0, 0.01)
+
+// DEFINE_UI_PARAMS(_clamp, Clamp, DCTLUI_CHECK_BOX, 1)
+// DEFINE_UI_PARAMS(_tn_su, Surround, DCTLUI_COMBO_BOX, 1, {_Dark, _Dim,
+// _Bright}, {Dark, Dim, Bright}) DEFINE_UI_PARAMS(_display_gamut, Display
+// Gamut, DCTLUI_COMBO_BOX, 0, {Rec709, P3D65, Rec2020, P3D60, P3DCI, XYZ},
+// {Rec.709, P3-D65, Rec.2020 (P3 Limited), P3-D60, P3-DCI, XYZ})
+// DEFINE_UI_PARAMS(_eotf, Display EOTF, DCTLUI_COMBO_BOX, 2, {eotf0, eotf1,
+// eotf2, eotf3, eotf4, eotf5}, {Linear, 2.2 Power sRGB Display, 2.4 Power
+// Rec.1886, 2.6 Power DCI, ST 2084 PQ, HLG})
+
+/*------------------------------------------------------------------------------------------------------------
+!!! TO ENABLE STICKSHIFT MODE FOR CUSTOM LOOK CREATION: **COMMENT OUT** all of
+the preset parameters below.
+-------------------------------------------------------------------------------------------------------------*/
+
+/* Optionally Enable the Base Preset
+    If you really want the Base preset, you can enable the look_preset
+   definition below and disable the other one. Leaving it disabled by default as
+   it is a perilous undertaking to create a nice picture using this as a
+   starting point.
+*/
+// DEFINE_UI_PARAMS(look_preset, Look Preset, DCTLUI_COMBO_BOX, 0, {look0,
+// look1, look2, look3, look4, look5, look6, look7}, {Standard, Arriba, Sylvan,
+// Colorful, Aery, Dystopic, Umbra, Base})
+// DEFINE_UI_PARAMS(look_preset, Look Preset, DCTLUI_COMBO_BOX, 0,
+//                  { look0, look1, look2, look3, look4, look5, look6 },
+//                  { Standard, Arriba, Sylvan, Colorful, Aery, Dystopic, Umbra
+//                  })
+
+// DEFINE_UI_PARAMS(tonescale_preset, Tonescale Preset, DCTLUI_COMBO_BOX, 0,
+//                  { tsprst0, tsprst1, tsprst2, tsprst3, tsprst4, tsprst5,
+//                    tsprst6, tsprst7, tsprst8, tsprst9, tsprst10, tsprst11,
+//                    tsprst12, tsprst13 },
+//                  { USE LOOK PRESET, Low Contrast, Medium Contrast,
+//                    High Contrast, Arriba Tonescale, Sylvan Tonescale,
+//                    Colorful Tonescale, Aery Tonescale, Dystopic Tonescale,
+//                    Umbra Tonescale, ACES - 1.x, ACES - 2.0, Marvelous
+//                    Tonescape, DaGrinchi ToneGroan })
+// DEFINE_UI_PARAMS(_cwp, Creative White, DCTLUI_COMBO_BOX, 0,
+//                  { _cwp0, _cwp1, _cwp2, _cwp3, _cwp4, _cwp5, _cwp6 },
+//                  { USE LOOK PRESET, D93, D75, D65, D60, D55, D50 })
+// DEFINE_UI_PARAMS(_cwp_lm, Creative White Limit, DCTLUI_SLIDER_FLOAT, 0.25,
+// 0.0,
+//                  1.0, 0.0)
+// DEFINE_UI_PARAMS(
+//     display_encoding_preset, Display Encoding Preset, DCTLUI_COMBO_BOX, 0,
+//     { rec1886, srgb, displayp3, p3d60, p3dci, xyz, rec2100pq, rec2100hlg,
+//       dolbypq },
+//     { Rec .1886 - 2.4 Power / Rec .709, sRGB Display - 2.2 Power / Rec .709,
+//       Display P3 - 2.2 Power / P3 - D65, DCI - 2.6 Power / P3 - D60,
+//       DCI - 2.6 Power / P3 - DCI, DCI - 2.6 Power / XYZ,
+//       Rec .2100 - PQ / Rec .2020(P3 Limited),
+//       Rec .2100 - HLG / Rec .2020(P3 Limited), Dolby - PQ / P3 - D65 })
+
+/*------------------------------------------------------------------------------------------------------------*/
+
 /******************************************************************
   Gamut Conversion Matrices
  ******************************************************************/
 // Input gamut conversion matrices
+
+// ACES AP0 to XYZ D65 (CAT02)
 const static float3x3 matrix_ap0_to_xyz =
     make_float3x3(make_float3(0.938630948750273197f, -0.00574192055037397141f,
                               0.017566898851772296f),
@@ -502,6 +260,7 @@ const static float3x3 matrix_ap0_to_xyz =
                               -0.0653074977334571899f),
                   make_float3(0.000723121511341165988f,
                               0.000818441849244731985f, 1.08751618739929268f));
+// ACES AP1 to XYZ D65 (CAT02)
 const static float3x3 matrix_ap1_to_xyz =
     make_float3x3(make_float3(0.652418717671912951f, 0.127179925537538263f,
                               0.170857283842220459f),
@@ -548,16 +307,9 @@ const static float3x3 matrix_sonysgamut3cine_to_xyz =
                   make_float3(-0.0320658495445057951f, -0.0276583906794915374f,
                               1.1487819909838759f));
 const static float3x3 matrix_vgamut_to_xyz = make_float3x3(
-    make_float3(0.679644469878f, 0.15221141244f, 0.118600044733),
-    make_float3(0.26068555009f, 0.77489446333f, -0.03558001342),
-    make_float3(-0.009310198218f, -0.004612467044f, 1.10298041602));
-const static float3x3 matrix_bmdwg_to_xyz =
-    make_float3x3(make_float3(0.606538368282783846f, 0.220412735329269888f,
-                              0.12350482343961787f),
-                  make_float3(0.2679929400567444f, 0.832748409123375777f,
-                              -0.100741349180120274f),
-                  make_float3(-0.029442554160109307f, -0.0866124302772565829f,
-                              1.20511273519724438f));
+    make_float3(0.679644469878f, 0.15221141244f, 0.118600044733f),
+    make_float3(0.26068555009f, 0.77489446333f, -0.03558001342f),
+    make_float3(-0.009310198218f, -0.004612467044f, 1.10298041602f));
 const static float3x3 matrix_egamut_to_xyz =
     make_float3x3(make_float3(0.705396850087770755f, 0.164041328309919021f,
                               0.0810177486539819941f),
@@ -785,12 +537,6 @@ float3x3 identity() {
                        make_float3(0.0f, 1.0f, 0.0f),
                        make_float3(0.0f, 0.0f, 1.0f));
 }
-
-// Multiply 3x3 matrix m and float3 vector v
-// float3 vdot(float3x3 m, float3 v) {
-//   return make_float3(m[0].x*v.x + m[0].y*v.y + m[0].z*v.z, m[1].x*v.x + m[1].y*v.y
-//   + m[1].z*v.z, m[2].x*v.x + m[2].y*v.y + m[2].z*v.z);
-// }
 
 // Safe division of float a by float b
 float sdivf(float a, float b) {
@@ -1298,13 +1044,11 @@ float3 display_gamut_whitepoint(float3 rgb, float tsn, float cwp_lm,
   return rgb;
 }
 
-// float3 opendrt_transform(int p_Width, int p_Height, int p_X, int p_Y, float
-// p_R, float p_G, float p_B)
 float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
+
   /*****************************************************
     Parameter Setup
     --------------------------------------------------*/
-
   // Unpack uniforms from struct
   uint in_gamut = uniforms.inGamut; // Input Gamut
   uint in_oetf = uniforms.inOetf;   // Input OETF
@@ -1325,7 +1069,6 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
       brl_g, brl_b, brl_rng, brl_st, brlp, brlp_r, brlp_g, brlp_b, hc_r,
       hc_r_rng, hs_r, hs_r_rng, hs_g, hs_g_rng, hs_b, hs_b_rng, hs_c, hs_c_rng,
       hs_m, hs_m_rng, hs_y, hs_y_rng;
-
 
   /*----------- LOOK PRESETS -----------------*/
   if (look_preset == 0) { // Standard
@@ -1665,18 +1408,18 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
     tn_lcon_enable = 1;
     tn_lcon = 1.0f;
     tn_lcon_w = 0.75f;
-    cwp = 2;
+    cwp = 3;
     cwp_lm = 0.25f;
-    rs_sa = 0.35f;
+    rs_sa = 0.2f;
     rs_rw = 0.25f;
     rs_bw = 0.55f;
     pt_enable = 1;
-    pt_lml = 0.0f;
-    pt_lml_r = 0.25f;
+    pt_lml = 0.15f;
+    pt_lml_r = 0.0f;
     pt_lml_g = 0.0f;
-    pt_lml_b = 0.25f;
+    pt_lml_b = 0.0f;
     pt_lmh = 0.0f;
-    pt_lmh_r = 0.5f;
+    pt_lmh_r = 0.0f;
     pt_lmh_b = 0.0f;
     ptl_enable = 1;
     ptl_c = 0.05f;
@@ -1687,13 +1430,13 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
     ptm_low_rng = 0.25f;
     ptm_low_st = 0.8f;
     ptm_high = -0.8f;
-    ptm_high_rng = 0.8f;
+    ptm_high_rng = 0.6f;
     ptm_high_st = 0.25f;
     brl_enable = 1;
     brl = -2.0f;
-    brl_r = -3.0f;
+    brl_r = -2.0f;
     brl_g = -2.0f;
-    brl_b = -2.0f;
+    brl_b = 0.0f;
     brl_rng = 0.35f;
     brl_st = 0.35f;
     brlp_enable = 1;
@@ -2090,7 +1833,6 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
     eotf = 4;
   }
 
-
   float3x3 in_to_xyz;
   if (in_gamut == 0)
     in_to_xyz = identity();
@@ -2104,23 +1846,24 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
     in_to_xyz = matrix_rec2020_to_xyz;
   else if (in_gamut == 5)
     in_to_xyz = matrix_rec709_to_xyz;
-  else if (in_gamut==6) in_to_xyz = matrix_arriwg3_to_xyz;
-  else if (in_gamut==7) in_to_xyz = matrix_arriwg4_to_xyz;
-  else if (in_gamut==8) in_to_xyz = matrix_redwg_to_xyz;
-  else if (in_gamut==9) in_to_xyz = matrix_sonysgamut3_to_xyz;
-  else if (in_gamut==10) in_to_xyz = matrix_sonysgamut3cine_to_xyz;
-  else if (in_gamut==11) in_to_xyz = matrix_vgamut_to_xyz;
-  else if (in_gamut==12) in_to_xyz = matrix_bmdwg_to_xyz;
-  else if (in_gamut==13) in_to_xyz = matrix_egamut_to_xyz;
-  else if (in_gamut==14) in_to_xyz = matrix_egamut2_to_xyz;
-  else if (in_gamut==15) in_to_xyz = matrix_davinciwg_to_xyz;
-
-  // float crv_tsn = 0.0f;
-  // float2 pos = make_float2(p_X, p_Y);
-  // float2 res = make_float2(p_Width, p_Height);
-
-  // x-position based input value for tonescale overlay
-  // if (crv_enable == 1) crv_tsn = oetf_filmlight_tlog(pos.x/res.x);
+  else if (in_gamut == 6)
+    in_to_xyz = matrix_arriwg3_to_xyz;
+  else if (in_gamut == 7)
+    in_to_xyz = matrix_arriwg4_to_xyz;
+  else if (in_gamut == 8)
+    in_to_xyz = matrix_redwg_to_xyz;
+  else if (in_gamut == 9)
+    in_to_xyz = matrix_sonysgamut3_to_xyz;
+  else if (in_gamut == 10)
+    in_to_xyz = matrix_sonysgamut3cine_to_xyz;
+  else if (in_gamut == 11)
+    in_to_xyz = matrix_vgamut_to_xyz;
+  else if (in_gamut == 12)
+    in_to_xyz = matrix_egamut_to_xyz;
+  else if (in_gamut == 13)
+    in_to_xyz = matrix_egamut2_to_xyz;
+  else if (in_gamut == 14)
+    in_to_xyz = matrix_davinciwg_to_xyz;
 
   // Linearize if a non-linear input oetf / transfer function is selected
   rgb = linearize(rgb, in_oetf);
@@ -2166,7 +1909,6 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
 
   // Offset
   rgb += tn_off;
-  // if (crv_enable == 1) crv_tsn += tn_off;
 
   // Tonescale Norm
   float tsn = hypotf3(rgb) / SQRT3;
@@ -2226,30 +1968,18 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
         compress_toe_cubic(ts_x0, lcon_m, lcon_w, 1) / ts_x0;
     tsn *= lcon_cnst_sc;
     tsn = compress_toe_cubic(tsn, lcon_m, lcon_w, 0);
-
-    // if (crv_enable == 1) crv_tsn = compress_toe_cubic(crv_tsn*lcon_cnst_sc,
-    // lcon_m, lcon_w, 0);
   }
 
   // Contrast High
   if (tn_hcon_enable > 0) {
     float hcon_p = _powf(2.0f, tn_hcon);
     tsn = contrast_high(tsn, hcon_p, tn_hcon_pv, tn_hcon_st, 0);
-
-    // if (crv_enable == 1) crv_tsn = contrast_high(crv_tsn, hcon_p, tn_hcon_pv,
-    // tn_hcon_st, 0);
   }
 
   // Hyperbolic Compression
   float tsn_pt = compress_hyperbolic_power(tsn, ts_s1, ts_p);
   float tsn_const = compress_hyperbolic_power(tsn, s_Lp100, ts_p);
   tsn = compress_hyperbolic_power(tsn, ts_s, ts_p);
-
-  // float crv_tsn_const = 0.0f;
-  // if (crv_enable == 1) {
-  //   crv_tsn_const = compress_hyperbolic_power(crv_tsn, s_Lp100, ts_p);
-  //   crv_tsn = compress_hyperbolic_power(crv_tsn, ts_s, ts_p);
-  // }
 
   /***************************************************
     Hue Contrast R
@@ -2367,18 +2097,6 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
   tsn = compress_toe_quadratic(tsn, tn_toe, 0);
   tsn *= ts_dsc; // scale for display encoding
 
-  // if (crv_enable == 1) {
-  //   crv_tsn *= ts_m2;
-  //   crv_tsn = compress_toe_quadratic(crv_tsn, tn_toe, 0);
-  //   crv_tsn *= ts_dsc;
-  //   // scale to 1.0 = 1000 nits for st2084 PQ
-  //   if (eotf == 4) crv_tsn *= 10.0f;
-  // }
-
-  // float3 crv_rgb = make_float3(crv_tsn, crv_tsn, crv_tsn);
-  // if (crv_enable == 1) crv_rgb = display_gamut_whitepoint(crv_rgb,
-  // crv_tsn_const, cwp_lm, display_gamut, cwp);
-
   // Return from RGB ratios
   rgb *= tsn;
 
@@ -2400,25 +2118,6 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
     rgb = eotf_pq(rgb, 1);
   else if (eotf == 5)
     rgb = eotf_hlg(rgb, 1);
-
-  // if (crv_enable == 1) {
-  //   if ((eotf > 0) && (eotf < 4)) crv_rgb = spowf3(crv_rgb, 1.0f/eotf_p);
-  //   else if (eotf == 4) crv_rgb = eotf_pq(crv_rgb, 1);
-  //   else if (eotf == 5) crv_rgb = eotf_hlg(crv_rgb, 1);
-  // }
-
-  // Draw tonescale overlay
-  // if (crv_enable == 1) {
-  //   float3 crv_rgb_dst = make_float3(res.y-pos.y-crv_rgb.x*res.y,
-  //   res.y-pos.y-crv_rgb.y*res.y, res.y-pos.y-crv_rgb.z*res.y); float crv_w0 =
-  //   0.35f; // width of tonescale overlay crv_rgb_dst.x =
-  //   _expf(-crv_rgb_dst.x*crv_rgb_dst.x*crv_w0); crv_rgb_dst.y =
-  //   _expf(-crv_rgb_dst.y*crv_rgb_dst.y*crv_w0); crv_rgb_dst.z =
-  //   _expf(-crv_rgb_dst.z*crv_rgb_dst.z*crv_w0); float crv_lm = eotf < 4
-  //   ? 1.0f : 1.0f; // reduced luminance in hdr crv_rgb_dst =
-  //   clampf3(crv_rgb_dst, 0.0f, 1.0f); rgb = rgb * (1.0f - crv_rgb_dst) +
-  //   make_float3(crv_lm, crv_lm, crv_lm)*crv_rgb_dst;
-  // }
 
   return rgb;
 }
