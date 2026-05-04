@@ -19,7 +19,6 @@ void main(uint3 global_invocation_id: SV_DispatchThreadID) {
     return;
   }
 
-  // assume input pixels are in AP0 color space
   float4 input_color = textures.inputTexture[pixel_coords];
   float3 output_color = opendrt_transform(input_color.rgb, uniforms);
 

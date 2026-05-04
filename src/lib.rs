@@ -217,9 +217,10 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
     let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Shader Uniforms"),
         contents: bytemuck::cast_slice(&[ShaderUniforms {
-            in_gamut: 2, // AP1 primaries
-            in_oetf: 3,  // ACEScct oetf
-            display_encoding_preset: 1,
+            // values here will be replaced during the write_buffer call
+            in_gamut: 0,
+            in_oetf: 0,
+            display_encoding_preset: 0,
             look_preset: 0,
             display_peak_luminance: 100.0,
             _padding: [0; 3],
@@ -299,7 +300,7 @@ async fn process_look(
 ) -> anyhow::Result<()> {
     // Update uniform buffer with the current look preset
     let uniforms = ShaderUniforms {
-        in_gamut: 1,
+        in_gamut: 2,
         in_oetf: 3,
         display_encoding_preset: display_preset.to_u32(),
         look_preset: look.to_u32(),
