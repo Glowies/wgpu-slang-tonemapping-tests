@@ -481,10 +481,15 @@ float _fmaxf(float a, float b) { return max(a, b); }
 float _fminf(float a, float b) { return min(a, b); }
 
 float _fmod(float a, float b) { return fmod(a, b); }
-float _atan2f(float a, float b) { return atan2(a, b); }
+float _atan2f(float a, float b) {
+  if (abs(a) + abs(b) < 0.000001){
+    return a * b;
+  }
+  return atan2(a, b);
+}
 
 // overriding the declaration below
-float3 vdot(float3x3 m, float3 v) { return mul(m, v); }
+float3 vdot(float3x3 m, float3 v) { return mul(v, transpose(m)); }
 
 /******************************************************************
   Gamut Conversion Matrices
@@ -783,8 +788,8 @@ float3x3 identity() {
 
 // Multiply 3x3 matrix m and float3 vector v
 // float3 vdot(float3x3 m, float3 v) {
-//   return make_float3(m.x.x*v.x + m.x.y*v.y + m.x.z*v.z, m.y.x*v.x + m.y.y*v.y
-//   + m.y.z*v.z, m.z.x*v.x + m.z.y*v.y + m.z.z*v.z);
+//   return make_float3(m[0].x*v.x + m[0].y*v.y + m[0].z*v.z, m[1].x*v.x + m[1].y*v.y
+//   + m[1].z*v.z, m[2].x*v.x + m[2].y*v.y + m[2].z*v.z);
 // }
 
 // Safe division of float a by float b
@@ -1305,7 +1310,7 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
   uint in_oetf = uniforms.inOetf;   // Input OETF
   uint display_encoding_preset =
       uniforms.displayEncodingPreset;          // Display Encoding Preset
-  uint look_preset = uniforms.lookPreset; // Look Preset
+  uint look_preset = uniforms.lookPreset;      // Look Preset
   float tn_Lp = uniforms.displayPeakLuminance; // Display Peak Luminance
 
   // Init look preset variables
@@ -1321,79 +1326,6 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
       hc_r_rng, hs_r, hs_r_rng, hs_g, hs_g_rng, hs_b, hs_b_rng, hs_c, hs_c_rng,
       hs_m, hs_m_rng, hs_y, hs_y_rng;
 
-#ifdef INIT_PARAMS // Set all parameters to the user-controllable ones instead
-                   // of presets if INIT_PARAMS defined by user.
-
-  tn_con = _tn_con;
-  tn_sh = _tn_sh;
-  tn_toe = _tn_toe;
-  tn_off = _tn_off;
-  tn_hcon_enable = _tn_hcon_enable;
-  tn_hcon = _tn_hcon;
-  tn_hcon_pv = _tn_hcon_pv;
-  tn_hcon_st = _tn_hcon_st;
-  tn_lcon_enable = _tn_lcon_enable;
-  tn_lcon = _tn_lcon;
-  tn_lcon_w = _tn_lcon_w;
-  rs_sa = _rs_sa;
-  rs_rw = _rs_rw;
-  rs_bw = _rs_bw;
-  pt_enable = _pt_enable;
-  pt_lml = _pt_lml;
-  pt_lml_r = _pt_lml_r;
-  pt_lml_g = _pt_lml_g;
-  pt_lml_b = _pt_lml_b;
-  pt_lmh = _pt_lmh;
-  pt_lmh_r = _pt_lmh_r;
-  pt_lmh_b = _pt_lmh_b;
-  ptl_enable = _ptl_enable;
-  ptl_c = _ptl_c;
-  ptl_m = _ptl_m;
-  ptl_y = _ptl_y;
-  ptm_enable = _ptm_enable;
-  ptm_low = _ptm_low;
-  ptm_low_rng = _ptm_low_rng;
-  ptm_low_st = _ptm_low_st;
-  ptm_high = _ptm_high;
-  ptm_high_rng = _ptm_high_rng;
-  ptm_high_st = _ptm_high_st;
-  brl_enable = _brl_enable;
-  brl = _brl;
-  brl_r = _brl_r;
-  brl_g = _brl_g;
-  brl_b = _brl_b;
-  brl_rng = _brl_rng;
-  brl_st = _brl_st;
-  brlp_enable = _brlp_enable;
-  brlp = _brlp;
-  brlp_r = _brlp_r;
-  brlp_g = _brlp_g;
-  brlp_b = _brlp_b;
-  hc_enable = _hc_enable;
-  hc_r = _hc_r;
-  hc_r_rng = _hc_r_rng;
-  hs_rgb_enable = _hs_rgb_enable;
-  hs_r = _hs_r;
-  hs_r_rng = _hs_r_rng;
-  hs_g = _hs_g;
-  hs_g_rng = _hs_g_rng;
-  hs_b = _hs_b;
-  hs_b_rng = _hs_b_rng;
-  hs_cmy_enable = _hs_cmy_enable;
-  hs_c = _hs_c;
-  hs_c_rng = _hs_c_rng;
-  hs_m = _hs_m;
-  hs_m_rng = _hs_m_rng;
-  hs_y = _hs_y;
-  hs_y_rng = _hs_y_rng;
-  tn_su = _tn_su;
-  display_gamut = _display_gamut;
-  eotf = _eotf;
-  clamp = _clamp;
-  cwp = _cwp;
-  cwp_lm = _cwp_lm;
-
-#else // Otherwise, drive everything based on the preset combo box parameters.
 
   /*----------- LOOK PRESETS -----------------*/
   if (look_preset == 0) { // Standard
@@ -2158,7 +2090,6 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
     eotf = 4;
   }
 
-#endif
 
   float3x3 in_to_xyz;
   if (in_gamut == 0)
@@ -2173,16 +2104,16 @@ float3 opendrt_transform(float3 rgb, OpenDrtUniforms uniforms) {
     in_to_xyz = matrix_rec2020_to_xyz;
   else if (in_gamut == 5)
     in_to_xyz = matrix_rec709_to_xyz;
-  // else if (in_gamut==6) in_to_xyz = matrix_arriwg3_to_xyz;
-  // else if (in_gamut==7) in_to_xyz = matrix_arriwg4_to_xyz;
-  // else if (in_gamut==8) in_to_xyz = matrix_redwg_to_xyz;
-  // else if (in_gamut==9) in_to_xyz = matrix_sonysgamut3_to_xyz;
-  // else if (in_gamut==10) in_to_xyz = matrix_sonysgamut3cine_to_xyz;
-  // else if (in_gamut==11) in_to_xyz = matrix_vgamut_to_xyz;
-  // else if (in_gamut==12) in_to_xyz = matrix_bmdwg_to_xyz;
-  // else if (in_gamut==13) in_to_xyz = matrix_egamut_to_xyz;
-  // else if (in_gamut==14) in_to_xyz = matrix_egamut2_to_xyz;
-  // else if (in_gamut==15) in_to_xyz = matrix_davinciwg_to_xyz;
+  else if (in_gamut==6) in_to_xyz = matrix_arriwg3_to_xyz;
+  else if (in_gamut==7) in_to_xyz = matrix_arriwg4_to_xyz;
+  else if (in_gamut==8) in_to_xyz = matrix_redwg_to_xyz;
+  else if (in_gamut==9) in_to_xyz = matrix_sonysgamut3_to_xyz;
+  else if (in_gamut==10) in_to_xyz = matrix_sonysgamut3cine_to_xyz;
+  else if (in_gamut==11) in_to_xyz = matrix_vgamut_to_xyz;
+  else if (in_gamut==12) in_to_xyz = matrix_bmdwg_to_xyz;
+  else if (in_gamut==13) in_to_xyz = matrix_egamut_to_xyz;
+  else if (in_gamut==14) in_to_xyz = matrix_egamut2_to_xyz;
+  else if (in_gamut==15) in_to_xyz = matrix_davinciwg_to_xyz;
 
   // float crv_tsn = 0.0f;
   // float2 pos = make_float2(p_X, p_Y);
