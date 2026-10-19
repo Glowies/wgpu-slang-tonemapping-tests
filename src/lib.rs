@@ -99,6 +99,8 @@ pub struct Args {
     pub look: Option<OpenDrtLook>,
     #[arg(short, long)]
     pub display_preset: Option<OpenDrtDisplayPreset>,
+    #[arg(short, long)]
+    pub peak_luminance: Option<f32>,
 }
 
 // Define the uniform buffer struct that matches your shader
@@ -254,11 +256,13 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
 
     // Process each look preset
     let display_preset = args.display_preset.unwrap_or_default();
+    let peak_luminance = args.peak_luminance.unwrap_or(100.0);
 
     for look in looks_to_process {
         process_look(
             look,
             display_preset,
+            peak_luminance,
             &device,
             &queue,
             &pipeline,
@@ -284,6 +288,7 @@ pub async fn run(args: Args) -> anyhow::Result<()> {
 async fn process_look(
     look: OpenDrtLook,
     display_preset: OpenDrtDisplayPreset,
+    peak_luminance: f32,
     device: &wgpu::Device,
     queue: &wgpu::Queue,
     pipeline: &wgpu::ComputePipeline,
@@ -304,7 +309,7 @@ async fn process_look(
         in_oetf: 3,
         display_encoding_preset: display_preset.to_u32(),
         look_preset: look.to_u32(),
-        display_peak_luminance: 100.0,
+        display_peak_luminance: peak_luminance,
         _padding: [0; 3],
     };
     queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));
