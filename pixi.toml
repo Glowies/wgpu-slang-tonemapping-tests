@@ -1,0 +1,21 @@
+[workspace]
+authors = ["Oktay Comu <self@oktaycomu.com>"]
+channels = ["conda-forge"]
+name = "wgpu-slang-tonemappers"
+platforms = ["osx-arm64", "osx-64", "linux-64", "win-64"]
+version = "0.1.0"
+
+[tasks]
+build = "cargo build"
+start = "cargo run"
+test = "cargo test"
+clean = "cargo clean"
+fmt = "cargo fmt"
+lint = { cmd = "cargo clippy", depends-on = ["fmt"] }
+exr-to-spi3d = "python scripts/exr_to_spi3d.py"
+
+[dependencies]
+rust = ">=1.99.0,<1.100"
+shader-slang = ">=2026.14,<2027"
+python = "3.13.*"
+opencolorio-tools = ">=2.6.0,<3"
