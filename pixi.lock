@@ -162,6 +162,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-h7cc23a3_1004.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pugixml-1.15-h3f63f65_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pulseaudio-client-17.0-hb10c1b2_4.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/py-opencolorio-2.6.0-py313_h2d218bc_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pystring-1.2.0-h171cf75_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.13.16-hf47f18c_102_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/rav1e-0.8.1-h1fbca29_0.conda
@@ -206,6 +207,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/kernel-headers_linux-64-4.18.0-he073ed8_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/libgcc-devel_linux-64-16.2.0-he3ce08f_107.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/libstdcxx-devel_linux-64-16.2.0-h86e191b_107.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pybind11-abi-11-hc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rust-std-x86_64-unknown-linux-gnu-1.99.0-h480d76f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-h4ee821c_9.conda
@@ -219,6 +221,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/font-ttf-ubuntu-0.83-h77eed37_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/fonts-conda-ecosystem-1-0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-hc364b38_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pybind11-abi-11-hc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rust-std-x86_64-apple-darwin-1.99.0-hd192811_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
@@ -306,6 +309,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/pcre2-10.47-h31793e3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/pixman-0.46.4-h2fb4741_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/pugixml-1.15-h46091d4_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/py-opencolorio-2.6.0-py313_h5882db9_7.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/pystring-1.2.0-hebe015c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-3.13.16-h9dec186_102_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/rav1e-0.8.1-h618d828_0.conda
@@ -331,6 +335,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/font-ttf-ubuntu-0.83-h77eed37_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/fonts-conda-ecosystem-1-0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-hc364b38_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pybind11-abi-11-hc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rust-std-aarch64-apple-darwin-1.99.0-h451e77e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
@@ -432,6 +437,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pcre2-10.47-he63d830_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pixman-0.46.4-h784d473_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pugixml-1.15-hd3d436d_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/py-opencolorio-2.6.0-py313_hf461f78_7.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pystring-1.2.0-h3feff0a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.13.16-hb59dee6_102_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rav1e-0.8.1-h8246384_0.conda
@@ -459,6 +465,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/fonts-conda-ecosystem-1-0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-hc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/packaging-26.3-pyhc364b38_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pybind11-abi-11-hc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rust-std-x86_64-pc-windows-msvc-1.99.0-h5a2a77e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
@@ -545,6 +552,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/pcre2-10.47-h8466c1e_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/pixman-0.46.4-h5112557_3.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/pugixml-1.15-h372dad0_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/py-opencolorio-2.6.0-py313_h1d670a5_7.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/pystring-1.2.0-h477610d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/python-3.13.16-h254dcb4_102_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/rav1e-0.8.1-h007690e_0.conda
@@ -2712,6 +2720,23 @@ packages:
     - pulseaudio-client >=17.0,<17.1.0a0
   size: 754544
   timestamp: 1790788151618
+- conda: https://conda.anaconda.org/conda-forge/linux-64/py-opencolorio-2.6.0-py313_h2d218bc_7.conda
+  sha256: dd7aba3718348b0210136a233d1c0d52e8a65aae8dd4f0803b938f230e3def6f
+  md5: 4cbfd9658c5cff74e7c8313eec790bdd
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=15
+  - libstdcxx >=15
+  - pybind11-abi ==11
+  - libopencolorio >=2.6.0,<2.7.0a0
+  - python_abi 3.13.* *_cp313
+  license: BSD-3-Clause
+  license_family: BSD
+  run_exports:
+    weak:
+    - py-opencolorio >=2.6.0,<3.0a0
+  size: 1271488
+  timestamp: 1792053708145
 - conda: https://conda.anaconda.org/conda-forge/linux-64/pystring-1.2.0-h171cf75_0.conda
   sha256: bddb7c7d4f35e90c3b3c8e8c9d3ae2c12eff505fbb4d9952fd0d3c87f1e9a80a
   md5: fa423c9aec10d8fc36beff56a491869d
@@ -3360,6 +3385,16 @@ packages:
   run_exports: {}
   size: 116363
   timestamp: 1785888127370
+- conda: https://conda.anaconda.org/conda-forge/noarch/pybind11-abi-11-hc364b38_1.conda
+  sha256: 9e7fe12f727acd2787fb5816b2049cef4604b7a00ad3e408c5e709c298ce8bf1
+  md5: f0599959a2447c1e544e216bddf393fa
+  license: BSD-3-Clause
+  license_family: BSD
+  run_exports:
+    weak:
+    - pybind11-abi ==11
+  size: 14671
+  timestamp: 1752769938071
 - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
   build_number: 9
   sha256: 9dc0cb6a20ebc7e9bcd8c6868f2bec083c114b0ba20b7118405c036533d5c522
@@ -4698,6 +4733,22 @@ packages:
     - pugixml >=1.15,<1.16.0a0
   size: 97559
   timestamp: 1736601483485
+- conda: https://conda.anaconda.org/conda-forge/osx-64/py-opencolorio-2.6.0-py313_h5882db9_7.conda
+  sha256: 15959c07b09cfa5a28de722820116bee17ae43e9dad3d7f4fa890a2d12954935
+  md5: cc0b17914f2bfac3873484acbf94d1d5
+  depends:
+  - __osx >=11.0
+  - libcxx >=21
+  - libopencolorio >=2.6.0,<2.7.0a0
+  - pybind11-abi ==11
+  - python_abi 3.13.* *_cp313
+  license: BSD-3-Clause
+  license_family: BSD
+  run_exports:
+    weak:
+    - py-opencolorio >=2.6.0,<3.0a0
+  size: 926215
+  timestamp: 1792053747238
 - conda: https://conda.anaconda.org/conda-forge/osx-64/pystring-1.2.0-hebe015c_0.conda
   sha256: 04676302208bc84c3eb8b059e1c8e35ec6635e362b63c60a1e6e40bcbd111f34
   md5: 7221dfe119d9851eebd9a8d60198a449
@@ -6416,6 +6467,22 @@ packages:
     - pugixml >=1.15,<1.16.0a0
   size: 91283
   timestamp: 1736601509593
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/py-opencolorio-2.6.0-py313_hf461f78_7.conda
+  sha256: c4ba1a8084c2644834dfdb930e410c446d669703cbdbe3ef6e045ffdc9ec3473
+  md5: f5346419cff9e7e7dcb20496bf9c3881
+  depends:
+  - libcxx >=21
+  - __osx >=11.0
+  - python_abi 3.13.* *_cp313
+  - pybind11-abi ==11
+  - libopencolorio >=2.6.0,<2.7.0a0
+  license: BSD-3-Clause
+  license_family: BSD
+  run_exports:
+    weak:
+    - py-opencolorio >=2.6.0,<3.0a0
+  size: 891121
+  timestamp: 1792053714880
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pystring-1.2.0-h3feff0a_0.conda
   sha256: 984eb29cd70d21c626d40587e6ca5d0375c8dc4e09531b315f4a2cecc3824b3c
   md5: 4b4fc9aadab70b9c27bfa1d6d7a62d6a
@@ -8022,6 +8089,23 @@ packages:
     - pugixml >=1.15,<1.16.0a0
   size: 113967
   timestamp: 1736601565527
+- conda: https://conda.anaconda.org/conda-forge/win-64/py-opencolorio-2.6.0-py313_h1d670a5_7.conda
+  sha256: 3895a8dec83cab9cefc496a463d6230450e5980273707d66e086d975cd6ad077
+  md5: d4a9129801fec13d63ab51b6b91940e1
+  depends:
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  - ucrt >=10.0.20348.0
+  - python_abi 3.13.* *_cp313
+  - libopencolorio >=2.6.0,<2.7.0a0
+  - pybind11-abi ==11
+  license: BSD-3-Clause
+  license_family: BSD
+  run_exports:
+    weak:
+    - py-opencolorio >=2.6.0,<3.0a0
+  size: 649493
+  timestamp: 1792053701963
 - conda: https://conda.anaconda.org/conda-forge/win-64/pystring-1.2.0-h477610d_0.conda
   sha256: ec3f397d0f8d4e60cd1b2c109825a32ad819c9793d30e5c1badee6d3fe54e2bf
   md5: 2df5ec69aa1dfab69dd2642b206cefed

@@ -13,9 +13,11 @@ clean = "cargo clean"
 fmt = "cargo fmt"
 lint = { cmd = "cargo clippy", depends-on = ["fmt"] }
 exr-to-spi3d = "python scripts/exr_to_spi3d.py"
+build-ocio-config = "python scripts/build_ocio_config.py"
 
 [dependencies]
 rust = ">=1.99.0,<1.100"
 shader-slang = ">=2026.14,<2027"
 python = "3.13.*"
 opencolorio-tools = ">=2.6.0,<3"
+py-opencolorio = ">=2.6.0,<3"

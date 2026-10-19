@@ -3,3 +3,5 @@
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+/output
+__pycache__/

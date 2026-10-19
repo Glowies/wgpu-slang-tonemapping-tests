@@ -1,4 +1,21 @@
+# How-To: Generate OCIO Config from the LUTs
+
+## Generate your view transform LUTs
+```sh
+pixi run start --release -- refs/input/identity48.exr output/luts/acescct_to_display-p3_OpenDRT.exr -l all -d displayp3
+pixi run start --release -- refs/input/identity48.exr output/luts/acescct_to_srgb-display_OpenDRT.exr -l all -d srgb
+pixi run start --release -- refs/input/identity48.exr output/luts/acescct_to_rec2100-pq_OpenDRT.exr -l all -d rec2100pq -p 1000
+```
+
+## Add LUTs as View Transforms to an OCIO config
+```sh
+pixi run build-ocio-config output/luts output/ --name opendrt-custom 
+```
+
 # To get Blender to recognize and display HDR view transforms
+These are a few things that were needed for Blender to recognize and use the HDR View Transforms correctly.
+If you use an ACES OCIO config as your base, these should already be true.
+
 - Each HDR display space should have `encoding: hdr-video`
   - This makes sure the display is categorized as HDR under the Displays menu in Blender
 - The view transforms need be actually marked as ViewTransforms, not just plain ColorSpaces
