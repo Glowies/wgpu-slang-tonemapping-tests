@@ -33,6 +33,15 @@ KEPT_VIEWS = ["Un-tone-mapped", "Raw"]
 DISPLAY_XYZ = "CIE XYZ-D65 - Display-referred"
 VIEW_FAMILY = "OpenDRT"
 
+# Blender-specific role -> role it is filled from when the base config lacks it.
+# Blender picks the colorspace of newly loaded images and sequencer strips from
+# these; without them it tags even linear EXRs as sRGB.
+BLENDER_ROLES = {
+    "default_float": ocio.ROLE_SCENE_LINEAR,
+    "default_byte": ocio.ROLE_TEXTURE_PAINT,
+    "default_sequencer": ocio.ROLE_TEXTURE_PAINT,
+}
+
 # Input slug -> base config colorspace the LUT expects as input.
 INPUTS = {
     "acescct": "ACEScct",
@@ -240,6 +249,13 @@ def build_config(base, luts, name):
         if rules.getName(i) not in used_rules:
             rules.removeRule(i)
     cfg.setViewingRules(rules)
+
+    for role, source in BLENDER_ROLES.items():
+        if not cfg.hasRole(role):
+            colorspace = cfg.getColorSpace(source)
+            if colorspace is None:
+                sys.exit(f"Error: base config '{base}' has no '{source}' role to fill '{role}' from")
+            cfg.setRole(role, colorspace.getName())
 
     cfg.setName(name or f"{cfg.getName()}_opendrt")
     cfg.setDescription(
